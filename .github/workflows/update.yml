@@ -54,15 +54,33 @@ jobs:
           APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           PRZEWAGA_PUBLISH_DIR: ${{ runner.temp }}/publish
-        run: python -m app.cli run --kind ${{ steps.kind.outputs.kind }}
+        run: |
+          set -o pipefail
+          python -m app.cli run --kind ${{ steps.kind.outputs.kind }} | tee "$RUNNER_TEMP/summary.json"
+          # Surface provider problems as public annotations + job summary.
+          python - "$RUNNER_TEMP/summary.json" <<'PY'
+          import json, os, sys
+          s = json.load(open(sys.argv[1]))
+          for e in s.get("errors", [])[:10]:
+              print(f"::warning title=Pipeline::{e}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as out:
+              out.write("### Wynik aktualizacji\n")
+              for k in ("fixtures", "injuries", "odds_matched", "settled", "new", "updated", "withdrawn", "events", "history"):
+                  out.write(f"- **{k}**: {s.get(k)}\n")
+              out.write(f"- **błędy**: {len(s.get('errors', []))}\n")
+              for e in s.get("errors", []):
+                  out.write(f"  - {e}\n")
+          PY
 
       - name: Zapis historii (baza SQLite) w repozytorium
         run: |
           git config user.name "przewaga-bot"
           git config user.email "przewaga-bot@users.noreply.github.com"
           git add pipeline/data/przewaga.sqlite3
-          git diff --cached --quiet || git commit -m "dane: aktualizacja ${{ steps.kind.outputs.kind }} $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "dane: aktualizacja ${{ steps.kind.outputs.kind }} $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+            for i in 1 2 3; do git pull --rebase -q origin main && git push && break; sleep 5; done
+          fi
 
       # The app downloads https://raw.githubusercontent.com/<repo>/data/*.json.
       # The `data` branch holds only the latest JSON (force-pushed) so the repository does not grow.
