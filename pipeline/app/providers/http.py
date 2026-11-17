@@ -37,10 +37,11 @@ class UrllibTransport:
         self.timeout = timeout
 
     def get(self, url: str, headers: dict[str, str]) -> HttpResponse:
-        req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "przewaga/0.2", **headers})
+        req = urllib.request.Request(url, headers={"Accept": "application/json, text/csv;q=0.9, */*;q=0.5", "User-Agent": "przewaga/0.4", **headers})
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                return HttpResponse(r.status, {k.lower(): v for k, v in r.headers.items()}, json.loads(r.read().decode("utf-8")))
+                headers = {k.lower(): v for k, v in r.headers.items()}
+                return HttpResponse(r.status, headers, decode_body(r.read(), headers.get("content-type", "")))
         except urllib.error.HTTPError as e:
             body: Any
             try:
@@ -48,6 +49,22 @@ class UrllibTransport:
             except Exception:  # noqa: BLE001 - provider returned non-JSON error page
                 body = None
             return HttpResponse(e.code, {k.lower(): v for k, v in (e.headers or {}).items()}, body)
+
+
+def decode_body(raw: bytes, content_type: str) -> Any:
+    """JSON for APIs; plain text for CSV downloads (football-data.co.uk files are not always UTF-8)."""
+    text = raw.decode("utf-8-sig", errors="strict") if _is_utf8(raw) else raw.decode("latin-1")
+    if "json" in content_type or text.lstrip()[:1] in ("{", "["):
+        return json.loads(text)
+    return text
+
+
+def _is_utf8(raw: bytes) -> bool:
+    try:
+        raw.decode("utf-8")
+        return True
+    except UnicodeDecodeError:
+        return False
 
 
 def utcnow() -> datetime:

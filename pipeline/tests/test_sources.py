@@ -110,3 +110,56 @@ def test_football_data_org_parsing(conn):
     assert (f5.home_score, f5.away_score) == (1, 1), "bets settle on regular time, not after extra time"
     # the key never lands in the call log
     assert "k" not in conn.execute("SELECT params FROM provider_calls").fetchone()["params"]
+
+
+# ---------- football-data.co.uk CSV ----------
+
+E0_2526 = """﻿Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR,PSCH,PSCD,PSCA
+E0,15/08/2025,20:00,Liverpool,Bournemouth,4,2,H,1.30,6.0,9.5
+E0,16/08/2025,12:30,Aston Villa,Newcastle,0,0,D,2.4,3.4,3.0
+E0,17/05/26,15:00,Man United,Nott'm Forest,2,1,H,1.8,3.8,4.6
+,,,,,,,,,,
+"""
+E0_2627 = "Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR\nE0,08/11/2026,15:00,Liverpool,Arsenal,2,1,H\nE0,09/11/2026,16:30,Chelsea,Spurs,,,\n"
+POL = """Country,League,Season,Date,Time,Home,Away,HG,AG,Res,PSCH,PSCD,PSCA
+Poland,Ekstraklasa,2024/2025,20/05/2025,18:00,Legia,Lech,1,1,D,2.5,3.3,2.9
+Poland,Ekstraklasa,2025/2026,19/07/2025,20:15,Lech,Lechia,3,0,H,1.5,4.2,6.0
+Poland,Ekstraklasa,2026/2027,18/07/2026,17:30,Gornik Z.,Rakow,0,2,A,3.1,3.3,2.3
+"""
+
+
+def test_csv_history_parsing_and_season_filter(conn):
+    from app.providers.fd_csv import FootballDataCsv, season_code
+
+    assert season_code("2025") == "2526" and season_code("2099") == "9900"
+    t = Canned({"mmz4281/2526/E0.csv": E0_2526, "mmz4281/2627/E0.csv": E0_2627, "new/POL.csv": POL})
+    api = FootballDataCsv(client(conn, t, provider="football-data-csv", auth={}))
+    epl = api.results("epl", "E0", ["2026", "2025"])
+    assert len(epl) == 4, "blank lines and unplayed matches are skipped"
+    first = next(f for f in epl if f.home.name == "Liverpool" and f.season == "2025")
+    assert first.kickoff == datetime(2025, 8, 15, 19, 0, tzinfo=timezone.utc), "UK local time -> UTC"
+    assert first.id == "fb:csv:epl:2025-08-15:liverpool:bournemouth" and first.home_score == 4
+    assert any(f.home.name == "Man United" and f.kickoff.year == 2026 for f in epl), "two-digit years"
+    pol = api.results("ekstraklasa", "new/POL", ["2026", "2025"])
+    assert [f.home.name for f in pol] == ["Lech", "Gornik Z."], "older seasons ignored"
+
+
+def test_csv_history_merges_into_football_data_org_teams(conn):
+    from app.providers.fd_csv import parse
+
+    fdo = FootballDataOrg(client(conn, Canned({"competitions/PL/matches": FDO_BODY}))).matches("epl", "PL", "2026")
+    ingest.store_fixtures(conn, fdo[:2], NOW, "fdo")
+    ingest.store_fixtures(conn, parse(E0_2627, "epl", {"2026"}), NOW, "csv")
+    n = conn.execute("SELECT COUNT(*) n FROM events WHERE league_key = 'epl'").fetchone()["n"]
+    assert n == 2, "the CSV row of a match already known from football-data.org is merged, not duplicated"
+    ids = {r["id"] for r in conn.execute("SELECT id FROM teams")}
+    assert ids == {"fdo:64", "fdo:57"}
+
+
+def test_body_decoding_json_csv_and_latin1():
+    from app.providers.http import decode_body
+
+    assert decode_body(b'{"a": 1}', "application/json") == {"a": 1}
+    assert decode_body(b"[]", "text/plain") == []
+    assert decode_body("﻿Div,Date\n".encode("utf-8"), "text/csv") == "Div,Date\n"
+    assert decode_body("Home\nGórnik".encode("latin-1"), "application/octet-stream") == "Home\nGórnik"

@@ -43,3 +43,4 @@ API-Football (plan Free) zwraca dla sezonów 2025 i 2026 błąd: `{"plan": "Free
 | Krok | Stan | Co zrobiono |
 |---|---|---|
 | 1. football-data.org + tożsamość drużyn | ✅ | `providers/football_data_org.py` (statusy, wynik z czasu regulaminowego), `teams.py` (tabela `team_aliases`: nazwa ze źródła → jedno id drużyny), `ingest.store_fixtures(..., source)` scala ten sam mecz z dwóch źródeł (te same drużyny ±36 h, wynik nigdy nie jest cofany). Dopasowanie nazw rozumie skróty z CSV („Man United”, „Ein Frankfurt”, „Nott'm Forest”). |
+| 2. Historia z football-data.co.uk | ✅ | `providers/fd_csv.py`: pliki `mmz4281/{sezon}/E0, SP1, D1.csv` i `new/POL.csv` (filtr sezonów po dacie), czas UK → UTC, pominięte wiersze bez wyniku. Klient HTTP czyta też CSV (UTF-8 z BOM lub latin-1). Wiersze CSV meczów znanych z football-data.org są scalane. |
