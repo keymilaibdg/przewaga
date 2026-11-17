@@ -1,0 +1,16 @@
+node_modules/
+frontend/dist/
+frontend/dist-single/
+frontend/screenshots/
+frontend/public/data/
+__pycache__/
+*.pyc
+.pytest_cache/
+pipeline/.env
+pipeline/data/*.sqlite3-wal
+pipeline/data/*.sqlite3-shm
+.env
+frontend/android/
+*.jks
+*.keystore
+przewaga-podpis*.txt

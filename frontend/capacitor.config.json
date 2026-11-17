@@ -1,0 +1,13 @@
+{
+  "appId": "pl.przewaga.app",
+  "appName": "Przewaga",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#060912",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorHttp": { "enabled": true },
+    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#060912", "showSpinner": false }
+  }
+}

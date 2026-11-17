@@ -1,0 +1,77 @@
+name: Aktualizacja danych
+
+# Morning run: full update. Afternoon run: only if the odds budget allows (the pipeline decides).
+# Times are UTC (07:17 / 15:47 Polish winter time). GitHub may start scheduled runs a few minutes late.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+    - cron: "47 14 * * *"
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "Rodzaj aktualizacji"
+        type: choice
+        options: [morning, afternoon]
+        default: morning
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Zależności Pythona
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Rodzaj przebiegu
+        id: kind
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "kind=${{ inputs.kind }}" >> "$GITHUB_OUTPUT"
+          elif [ "$(date -u +%H)" -lt 12 ]; then
+            echo "kind=morning" >> "$GITHUB_OUTPUT"
+          else
+            echo "kind=afternoon" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pobranie danych, analiza, eksport JSON
+        working-directory: pipeline
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          PRZEWAGA_PUBLISH_DIR: ${{ runner.temp }}/publish
+        run: python -m app.cli run --kind ${{ steps.kind.outputs.kind }}
+
+      - name: Zapis historii (baza SQLite) w repozytorium
+        run: |
+          git config user.name "przewaga-bot"
+          git config user.email "przewaga-bot@users.noreply.github.com"
+          git add pipeline/data/przewaga.sqlite3
+          git diff --cached --quiet || git commit -m "dane: aktualizacja ${{ steps.kind.outputs.kind }} $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          git push
+
+      # The app downloads https://raw.githubusercontent.com/<repo>/data/*.json.
+      # The `data` branch holds only the latest JSON (force-pushed) so the repository does not grow.
+      - name: Publikacja analiz dla aplikacji (gałąź data)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd "${{ runner.temp }}/publish"
+          git init -q -b data
+          git add .
+          git -c user.name="przewaga-bot" -c user.email="przewaga-bot@users.noreply.github.com" commit -qm "analizy $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" data
