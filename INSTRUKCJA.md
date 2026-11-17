@@ -27,14 +27,15 @@ Czas: ok. 20–30 minut. Wszystko robisz raz. Potem aplikacja sama aktualizuje a
 2. Podaj e-mail. Klucz przyjdzie mailem.
 
 ## Krok 4. Sekrety w repozytorium
-W repozytorium: **Settings → Secrets and variables → Actions → New repository secret**. Dodaj 4 sekrety (nazwa musi być dokładnie taka):
+W repozytorium: **Settings → Secrets and variables → Actions → New repository secret**. Dodaj sekrety (nazwa musi być dokładnie taka):
 
 | Nazwa | Wartość |
 |---|---|
 | `APISPORTS_KEY` | klucz z kroku 2 |
 | `ODDS_API_KEY` | klucz z kroku 3 |
-| `ANDROID_KEYSTORE_B64` | długi tekst z pliku `przewaga-podpis.txt` (linia „ANDROID_KEYSTORE_B64”) |
-| `ANDROID_KEYSTORE_PASSWORD` | hasło z pliku `przewaga-podpis.txt` |
+| `ANDROID_KEYSTORE_PASSWORD` | 24-znakowe hasło z pliku `przewaga-podpis.txt` |
+
+Klucz podpisu leży w repozytorium w postaci zaszyfrowanej (`frontend/signing/`). Bez hasła jest bezużyteczny, dlatego hasło trzymaj tylko w sekretach.
 
 Sekrety są szyfrowane: nikt ich nie zobaczy, także w publicznym repozytorium.
 

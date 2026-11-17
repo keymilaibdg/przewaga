@@ -1,8 +1,8 @@
 name: Budowa aplikacji Android (APK)
 
 # Builds the APK on GitHub's servers (they have the Android SDK) and publishes it in Releases.
-# Signing: with secrets ANDROID_KEYSTORE_B64 + ANDROID_KEYSTORE_PASSWORD the APK is signed with your
-# permanent key (updates install over the previous version). Without them a debug-signed APK is built.
+# Signing: with secret ANDROID_KEYSTORE_PASSWORD the APK is signed with the committed encrypted key
+# (updates install over the previous version). Without it a debug-signed APK is built.
 on:
   push:
     branches: [main]
@@ -38,25 +38,19 @@ jobs:
           ls "$ANDROID_HOME/build-tools" | tail -3
           ls "$ANDROID_HOME/platforms" | tail -3
 
-      # Fails fast (in seconds, before the long build) when the signing secrets are wrong.
+      # The signing key is committed encrypted (PKCS#12: AES-256 + PBKDF2) in frontend/signing/.
+      # Only its 24-character password is a secret. Fails fast with a clear message when it is wrong.
       - name: Kontrola klucza podpisu
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          EXPECTED_SHA256: 1c35f745bd082513930be01ab7138bbafc7c2d079d36a3d51dc7311f4ec91034
         run: |
-          if [ -z "$KEYSTORE_B64" ]; then echo "::warning::Brak sekretu ANDROID_KEYSTORE_B64 — zostanie zbudowany APK debug."; exit 0; fi
-          CLEAN=$(printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n\t')
-          echo "Długość ANDROID_KEYSTORE_B64: ${#CLEAN} znaków (oczekiwane: 3516). Długość hasła: ${#KEYSTORE_PASSWORD} (oczekiwane: 24)."
-          if [ "${#CLEAN}" -ne 3516 ]; then
-            echo "::error title=Zły sekret ANDROID_KEYSTORE_B64::Ma ${#CLEAN} znaków zamiast 3516. Wklej ponownie CAŁY długi tekst spod napisu ANDROID_KEYSTORE_B64 z pliku przewaga-podpis.txt (hasło ma 24 znaki: jeśli sekret ma 24, wartości są zamienione)."
+          if [ -z "$KEYSTORE_PASSWORD" ]; then echo "::warning::Brak sekretu ANDROID_KEYSTORE_PASSWORD — zostanie zbudowany APK debug."; exit 0; fi
+          PW=$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d ' \r\n\t')
+          echo "Długość hasła: ${#PW} (oczekiwane: 24)."
+          keytool -list -keystore frontend/signing/przewaga-release.p12 -storetype PKCS12 -storepass "$PW" -alias przewaga >/dev/null 2>&1 || {
+            echo "::error title=Zły sekret ANDROID_KEYSTORE_PASSWORD::Hasło nie pasuje do klucza (długość ${#PW}, oczekiwane 24). Wklej ponownie hasło spod napisu ANDROID_KEYSTORE_PASSWORD z pliku przewaga-podpis.txt."
             exit 1
-          fi
-          printf '%s' "$CLEAN" | base64 -d > "$RUNNER_TEMP/k.jks" || { echo "::error title=Zły sekret ANDROID_KEYSTORE_B64::Tekst nie jest poprawnym base64 — wklej go ponownie w całości."; exit 1; }
-          GOT=$(sha256sum "$RUNNER_TEMP/k.jks" | cut -d' ' -f1)
-          if [ "$GOT" != "$EXPECTED_SHA256" ]; then echo "::error title=Zły sekret ANDROID_KEYSTORE_B64::Klucz różni się od pliku przewaga-podpis.txt — wklej ponownie."; exit 1; fi
-          keytool -list -keystore "$RUNNER_TEMP/k.jks" -storepass "$KEYSTORE_PASSWORD" -alias przewaga >/dev/null 2>&1 || { echo "::error title=Zły sekret ANDROID_KEYSTORE_PASSWORD::Hasło nie pasuje do klucza. Wklej ponownie 24-znakowe hasło spod napisu ANDROID_KEYSTORE_PASSWORD."; rm -f "$RUNNER_TEMP/k.jks"; exit 1; }
-          rm -f "$RUNNER_TEMP/k.jks"
+          }
           echo "Klucz podpisu poprawny."
 
       - name: Wersja
@@ -89,10 +83,11 @@ jobs:
       - name: Build APK
         working-directory: frontend/android
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEYSTORE_PASSWORD_RAW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           set -o pipefail
+          export KEYSTORE_PASSWORD=$(printf '%s' "$KEYSTORE_PASSWORD_RAW" | tr -d ' \r\n\t')
+          KS="$GITHUB_WORKSPACE/frontend/signing/przewaga-release.p12"
           LOG="$RUNNER_TEMP/step.log"
           # Report the tail of the failing command as a public annotation (visible without opening the log).
           fail() {
@@ -102,17 +97,15 @@ jobs:
           }
           run() { local title="$1"; shift; echo "== $title"; "$@" >"$LOG" 2>&1 || fail "$title"; tail -5 "$LOG"; }
           OUT="$GITHUB_WORKSPACE/Przewaga-${{ steps.ver.outputs.version }}.apk"
-          if [ -n "$KEYSTORE_B64" ]; then
+          if [ -n "$KEYSTORE_PASSWORD" ]; then
             run "Gradle assembleRelease" ./gradlew --no-daemon --stacktrace assembleRelease
-            printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > "$RUNNER_TEMP/release.jks" 2>"$LOG" || fail "Dekodowanie ANDROID_KEYSTORE_B64 (sprawdź, czy wklejono cały tekst)"
             BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
             UNSIGNED=$(ls app/build/outputs/apk/release/*.apk | head -1)
             echo "build-tools: $BT, apk: $UNSIGNED"
             run "zipalign" "$BT/zipalign" -f -p 4 "$UNSIGNED" "$RUNNER_TEMP/aligned.apk"
-            run "apksigner sign (sprawdź ANDROID_KEYSTORE_PASSWORD)" "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-key-alias przewaga \
+            run "apksigner sign (sprawdź ANDROID_KEYSTORE_PASSWORD)" "$BT/apksigner" sign --ks "$KS" --ks-type PKCS12 --ks-key-alias przewaga \
               --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD --out "$OUT" "$RUNNER_TEMP/aligned.apk"
             run "apksigner verify" "$BT/apksigner" verify "$OUT"
-            rm -f "$RUNNER_TEMP/release.jks"
           else
             echo "::warning::Brak klucza podpisu — budowany APK debug (aktualizacje mogą wymagać odinstalowania poprzedniej wersji)."
             run "Gradle assembleDebug" ./gradlew --no-daemon --stacktrace assembleDebug
