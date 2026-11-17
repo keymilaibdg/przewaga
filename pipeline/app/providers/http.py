@@ -127,7 +127,7 @@ class ApiClient:
             if resp.status == 429 or resp.status >= 500:
                 last_error = f"HTTP {resp.status}"
                 self._log(endpoint, params, resp.status, False, last_error, remaining, cost)
-                self.sleep(2 ** (attempt + 1))
+                self.sleep(_retry_after(resp, 2 ** (attempt + 1)))
                 continue
             if resp.status >= 400:
                 msg = f"HTTP {resp.status}: {_err_text(resp.body)}"
@@ -159,7 +159,20 @@ def _cost(provider: str, resp: HttpResponse, expected: int) -> int:
     return 1
 
 
+def _retry_after(resp: HttpResponse, default: float) -> float:
+    """Per-minute limits (football-data.org, balldontlie) need a longer pause than the default backoff."""
+    for k in ("retry-after", "x-requestcounter-reset"):
+        try:
+            return min(65.0, max(default, float(resp.headers[k])))
+        except (KeyError, ValueError):
+            continue
+    return default
+
+
 def _remaining(provider: str, resp: HttpResponse) -> int | None:
+    """Remaining *daily/monthly* quota. Per-minute counters of other providers are not a budget."""
+    if provider != "the-odds-api" and not provider.startswith("api-"):
+        return None
     key = "x-requests-remaining" if provider == "the-odds-api" else "x-ratelimit-requests-remaining"
     try:
         return int(float(resp.headers[key]))

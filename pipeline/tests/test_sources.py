@@ -163,3 +163,53 @@ def test_body_decoding_json_csv_and_latin1():
     assert decode_body(b"[]", "text/plain") == []
     assert decode_body("﻿Div,Date\n".encode("utf-8"), "text/csv") == "Div,Date\n"
     assert decode_body("Home\nGórnik".encode("latin-1"), "application/octet-stream") == "Home\nGórnik"
+
+
+# ---------- balldontlie ----------
+
+def _bdl_game(gid, home, away, status, hs=0, vs=0, dt="2025-10-22T00:00:00.000Z", day="2025-10-21"):
+    team = lambda i, n, a: {"id": i, "full_name": n, "abbreviation": a, "name": n.split()[-1]}  # noqa: E731
+    return {"id": gid, "date": day, "datetime": dt, "season": 2025, "status": status, "postseason": False,
+            "home_team_score": hs, "visitor_team_score": vs, "home_team": team(*home), "visitor_team": team(*away)}
+
+
+BOS, LAL, DEN = (2, "Boston Celtics", "BOS"), (14, "Los Angeles Lakers", "LAL"), (8, "Denver Nuggets", "DEN")
+
+
+class Paged(Canned):
+    def get(self, url, headers):
+        self.calls.append((url, headers))
+        if "cursor=" not in url:
+            return HttpResponse(200, {}, {"data": [_bdl_game(1, BOS, LAL, "Final", 112, 104), _bdl_game(2, LAL, DEN, "Final", 99, 101)], "meta": {"next_cursor": 77, "per_page": 100}})
+        return HttpResponse(200, {}, {"data": [
+            _bdl_game(3, DEN, BOS, "3rd Qtr", 70, 68),
+            _bdl_game(4, BOS, DEN, "2025-10-24T23:30:00Z", dt=None),
+            _bdl_game(5, LAL, BOS, "7:30 pm ET", dt=None, day="2025-10-25"),
+        ], "meta": {"per_page": 100}})
+
+
+def test_balldontlie_paging_rate_limit_and_statuses(conn):
+    from app.providers.balldontlie import Balldontlie
+
+    slept: list[float] = []
+    t = Paged({})
+    c = ApiClient("balldontlie", "https://example.test/v1", {"Authorization": "bdl-key"}, conn, t, lambda: 100, sleep=slept.append, clock=lambda: NOW)
+    games = Balldontlie(c).games("nba", "2025-2026")
+    assert len(t.calls) == 2 and "cursor=77" in t.calls[1][0] and "seasons%5B%5D=2025" in t.calls[0][0]
+    assert t.calls[0][1]["Authorization"] == "bdl-key"
+    assert slept == [13], "5 requests/min: pause between pages"
+    by = {g.id: g for g in games}
+    assert (by["bb:bdl:1"].status, by["bb:bdl:1"].home_score, by["bb:bdl:1"].away_score) == ("finished", 112, 104)
+    assert (by["bb:bdl:3"].status, by["bb:bdl:3"].home_score) == ("live", None)
+    assert by["bb:bdl:4"].status == "scheduled" and by["bb:bdl:4"].kickoff == datetime(2025, 10, 24, 23, 30, tzinfo=timezone.utc)
+    assert by["bb:bdl:5"].status == "scheduled" and by["bb:bdl:5"].kickoff == datetime(2025, 10, 25, 23, 30, tzinfo=timezone.utc)
+    assert by["bb:bdl:1"].home.id == "bdl:2" and by["bb:bdl:1"].home.short == "BOS"
+
+
+def test_per_minute_counters_are_not_a_daily_budget(conn):
+    from app.providers.http import api_sports_budget
+
+    t = Canned({"games": {"data": [], "meta": {}}}, headers={"x-ratelimit-remaining": "4", "x-ratelimit-requests-remaining": "4"})
+    c = ApiClient("balldontlie", "https://example.test/v1", {}, conn, t, api_sports_budget(conn, "balldontlie", 60, 0, lambda: NOW), sleep=lambda s: None, clock=lambda: NOW)
+    c.get("games")
+    assert c.budget() == 59
