@@ -89,11 +89,10 @@ export class DemoProvider implements DataProvider {
 
   async getProviderHealth(): Promise<ProviderHealth[]> {
     return [
-      { id: "api-football", name: "API-Football", purpose: "Terminarze, wyniki, składy, kontuzje, statystyki", status: "not_configured", lastSync: null, quota: null },
-      { id: "the-odds-api", name: "The Odds API", purpose: "Kursy wielu bukmacherów", status: "not_configured", lastSync: null, quota: null },
-      { id: "sportmonks", name: "Sportmonks", purpose: "xG i statystyki zaawansowane", status: "not_configured", lastSync: null, quota: null },
-      { id: "nba", name: "Statystyki NBA", purpose: "Ratingi, pace, dostępność zawodników", status: "not_configured", lastSync: null, quota: null },
-      { id: "euroleague", name: "Euroliga / EuroCup", purpose: "Terminarze i statystyki", status: "not_configured", lastSync: null, quota: null },
+      { id: "football-data-org", name: "football-data.org", purpose: "Terminarze i wyniki: Premier League, La Liga, Bundesliga, Liga Mistrzów", status: "not_configured", lastSync: null, quota: null },
+      { id: "football-data-csv", name: "football-data.co.uk", purpose: "Historia wyników do modelu (PL, La Liga, Bundesliga, Ekstraklasa)", status: "not_configured", lastSync: null, quota: null },
+      { id: "balldontlie", name: "balldontlie", purpose: "Mecze i wyniki NBA", status: "not_configured", lastSync: null, quota: null },
+      { id: "the-odds-api", name: "The Odds API", purpose: "Kursy bukmacherów; terminarz i wyniki Ligi Europy, Ekstraklasy i Euroligi", status: "not_configured", lastSync: null, quota: null },
       { id: "pl-books", name: "STS · Fortuna · Superbet · Betclic", purpose: "Kursy polskich bukmacherów", status: "unverified", lastSync: null, quota: null },
     ];
   }
