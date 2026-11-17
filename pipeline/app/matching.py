@@ -1,4 +1,4 @@
-"""Match events between data sources (API-SPORTS fixtures vs The Odds API events) by time + team names."""
+"""Match teams and events between data sources (football-data.org, CSV history, balldontlie, The Odds API)."""
 from __future__ import annotations
 
 import re
@@ -38,6 +38,19 @@ _ALIASES = {
     "olympiakos": "olympiacos",
     "fenerbahce beko": "fenerbahce",
     "real madrid baloncesto": "real madrid",
+    # football-data.co.uk CSV abbreviations
+    "nott m forest": "nottingham",
+    "nottm forest": "nottingham",
+    "ath madrid": "atletico",
+    "ath bilbao": "athletic",
+    "espanol": "espanyol",
+    "m gladbach": "monchengladbach",
+    "mgladbach": "monchengladbach",
+    "hamburger sv": "hamburg",
+    "sheffield weds": "sheffield wednesday",
+    # football-data.org long names
+    "atletico de madrid": "atletico",
+    "club atletico de madrid": "atletico",
 }
 
 
@@ -50,7 +63,12 @@ def normalize(name: str) -> str:
 
 
 def similarity(a: str, b: str) -> float:
-    """Token-aware similarity. 'Manchester United' vs 'Manchester City' must stay low (shared city token)."""
+    """Token-aware similarity. 'Manchester United' vs 'Manchester City' must stay low (shared city token).
+
+    1.0 equal; 0.92 all tokens of the shorter name present in the longer one ('Betis' / 'Real Betis');
+    0.88 the same with abbreviated tokens ('Ein Frankfurt' / 'Eintracht Frankfurt', 'Gornik Z.' / 'Gornik Zabrze'),
+    which needs at least one exact token; otherwise Jaccard on tokens or spelling ratio for single words.
+    """
     na, nb = normalize(a), normalize(b)
     if not na or not nb:
         return 0.0
@@ -61,7 +79,25 @@ def similarity(a: str, b: str) -> float:
         return 0.92
     if len(ta) == 1 and len(tb) == 1:
         return SequenceMatcher(None, na, nb).ratio()  # spelling variants: Olympiacos / Olympiakos
+    short, long_ = (na.split(), nb.split()) if len(ta) <= len(tb) else (nb.split(), na.split())
+    if _abbrev_cover(short, long_):
+        return 0.88
     return len(ta & tb) / len(ta | tb)
+
+
+def _abbrev_cover(short: list[str], long_: list[str]) -> bool:
+    """Every token of `short` equals or abbreviates a distinct token of `long_`; at least one is exact."""
+    rest, exact = list(long_), 0
+    for t in short:
+        if t in rest:
+            rest.remove(t)
+            exact += 1
+            continue
+        hit = next((u for u in rest if u.startswith(t)), None)
+        if hit is None:
+            return False
+        rest.remove(hit)
+    return exact >= 1
 
 
 T = TypeVar("T")

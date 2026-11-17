@@ -19,14 +19,23 @@ CREATE TABLE IF NOT EXISTS leagues (
 );
 
 CREATE TABLE IF NOT EXISTS teams (
-    id TEXT PRIMARY KEY,              -- 'af:33' (API-Football) / 'ab:139' (API-Basketball)
+    id TEXT PRIMARY KEY,              -- 'fdo:64' (football-data.org) / 'bdl:2' (balldontlie) / '<source>:<league>:<slug>'
     name TEXT NOT NULL,
     short_name TEXT,
     logo_url TEXT
 );
 
+-- Name used by a source for a team in a league -> canonical team id (see app/teams.py).
+CREATE TABLE IF NOT EXISTS team_aliases (
+    league_key TEXT NOT NULL,
+    source TEXT NOT NULL,             -- fdo | csv | bdl | odds
+    name TEXT NOT NULL,
+    team_id TEXT NOT NULL REFERENCES teams(id),
+    PRIMARY KEY (league_key, source, name)
+);
+
 CREATE TABLE IF NOT EXISTS events (
-    id TEXT PRIMARY KEY,              -- 'fb:af:<fixture>' / 'bb:ab:<game>'
+    id TEXT PRIMARY KEY,              -- 'fb:fdo:<match>' / 'fb:csv:<league>:<date>:<home>:<away>' / 'bb:bdl:<game>' / 'odds:<event>'
     sport TEXT NOT NULL,
     league_key TEXT NOT NULL,
     season TEXT NOT NULL,
@@ -103,7 +112,7 @@ CREATE INDEX IF NOT EXISTS ix_recs_event ON recommendations(event_id);
 
 CREATE TABLE IF NOT EXISTS provider_calls (
     id INTEGER PRIMARY KEY,
-    provider TEXT NOT NULL,           -- api-football | api-basketball | the-odds-api
+    provider TEXT NOT NULL,           -- football-data-org | football-data-csv | balldontlie | the-odds-api
     endpoint TEXT NOT NULL,
     params TEXT,
     http_status INTEGER,

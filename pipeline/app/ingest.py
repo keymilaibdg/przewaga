@@ -6,36 +6,83 @@ from datetime import datetime, timedelta
 
 from .config import LeagueConfig
 from .db import upsert
+from . import teams
 from .matching import best_match
-from .providers.api_sports import Fixture, Injury
+from .providers.common import Fixture, Injury
 from .providers.http import iso
 from .providers.odds_api import OddsEvent
 
 
-def store_fixtures(conn: sqlite3.Connection, fixtures: list[Fixture], now: datetime) -> int:
+# Same pair of team ids within this window = the same match reported by two sources (CSV has no exact time).
+SAME_EVENT_WINDOW = timedelta(hours=36)
+# Sources whose kickoff time is exact; CSV and odds-only events yield to them.
+PRECISE_SOURCES = {"fdo", "bdl"}
+
+
+def store_fixtures(conn: sqlite3.Connection, fixtures: list[Fixture], now: datetime, source: str) -> int:
+    """Upsert fixtures/results. Team names go through the resolver; duplicates from other sources are merged."""
+    n = 0
     for f in fixtures:
-        for t in (f.home, f.away):
-            upsert(conn, "teams", {"id": t.id, "name": t.name, "short_name": short_name(t.name), "logo_url": t.logo})
-        upsert(
-            conn,
-            "events",
-            {
-                "id": f.id,
-                "sport": f.sport,
-                "league_key": f.league_key,
-                "season": f.season,
-                "home_team_id": f.home.id,
-                "away_team_id": f.away.id,
-                "kickoff": iso(f.kickoff),
-                "status": f.status,
-                "home_score": f.home_score,
-                "away_score": f.away_score,
-                "venue": f.venue,
-                "updated_at": iso(now),
-            },
-        )
+        hid = teams.resolve(conn, f.league_key, source, f.home)
+        aid = teams.resolve(conn, f.league_key, source, f.away)
+        if not hid or not aid or hid == aid:
+            continue
+        new = {
+            "id": f.id,
+            "sport": f.sport,
+            "league_key": f.league_key,
+            "season": f.season,
+            "home_team_id": hid,
+            "away_team_id": aid,
+            "kickoff": iso(f.kickoff),
+            "status": f.status,
+            "home_score": f.home_score,
+            "away_score": f.away_score,
+            "venue": f.venue,
+            "updated_at": iso(now),
+        }
+        row = conn.execute("SELECT * FROM events WHERE id = ?", (f.id,)).fetchone() or find_same_event(conn, f.league_key, hid, aid, f.kickoff, f.id)
+        if row is None:
+            upsert(conn, "events", new)
+        else:
+            merge_event(conn, row, new, precise=source in PRECISE_SOURCES)
+        n += 1
     conn.commit()
-    return len(fixtures)
+    return n
+
+
+def find_same_event(conn: sqlite3.Connection, league_key: str, home_id: str, away_id: str, kickoff: datetime, new_id: str) -> sqlite3.Row | None:
+    """The same match already stored by *another* source. Within one source ids are authoritative:
+    NBA plays two games between the same teams on consecutive nights."""
+    prefix = source_prefix(new_id)
+    return conn.execute(
+        """SELECT * FROM events WHERE league_key = ? AND home_team_id = ? AND away_team_id = ? AND kickoff BETWEEN ? AND ?
+           AND substr(id, 1, ?) != ? ORDER BY ABS(julianday(kickoff) - julianday(?)) LIMIT 1""",
+        (league_key, home_id, away_id, iso(kickoff - SAME_EVENT_WINDOW), iso(kickoff + SAME_EVENT_WINDOW), len(prefix), prefix, iso(kickoff)),
+    ).fetchone()
+
+
+def source_prefix(event_id: str) -> str:
+    """'fb:fdo:123' -> 'fb:fdo:', 'odds:abc' -> 'odds:'."""
+    parts = event_id.split(":")
+    return ":".join(parts[:2]) + ":" if len(parts) > 2 and parts[0] in ("fb", "bb") else parts[0] + ":"
+
+
+def merge_event(conn: sqlite3.Connection, row: sqlite3.Row, new: dict, precise: bool) -> None:
+    """Update an existing event (keeps its id: odds and recommendations point at it).
+
+    A final result is never downgraded (football-data.org shows results with a delay, CSV may already have them).
+    """
+    upd: dict = {"updated_at": new["updated_at"]}
+    if precise or row["id"] == new["id"]:
+        upd.update(kickoff=new["kickoff"], season=new["season"], venue=new["venue"] or row["venue"])
+    has_result = row["status"] == "finished" and row["home_score"] is not None
+    if new["status"] == "finished" and new["home_score"] is not None:
+        upd.update(status="finished", home_score=new["home_score"], away_score=new["away_score"])
+    elif not has_result:
+        upd.update(status=new["status"], home_score=new["home_score"], away_score=new["away_score"])
+    sets = ", ".join(f"{k} = ?" for k in upd)
+    conn.execute(f"UPDATE events SET {sets} WHERE id = ?", (*upd.values(), row["id"]))
 
 
 def store_injuries(conn: sqlite3.Connection, lg: LeagueConfig, items: list[Injury], now: datetime) -> int:

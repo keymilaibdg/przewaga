@@ -106,7 +106,7 @@ class Pipeline:
             for s in seasons:
                 fx = self._guard(f"terminarz {lg.key} {s}", lambda s=s: fetch(s))
                 if fx:
-                    total += ingest.store_fixtures(self.conn, fx, now)  # type: ignore[arg-type]
+                    total += ingest.store_fixtures(self.conn, fx, now, "af" if lg.sport == "football" else "ab")  # type: ignore[arg-type]
         return total
 
     def fetch_injuries(self) -> int:

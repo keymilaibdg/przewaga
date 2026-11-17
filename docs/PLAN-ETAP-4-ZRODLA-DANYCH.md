@@ -38,3 +38,8 @@ API-Football (plan Free) zwraca dla sezonów 2025 i 2026 błąd: `{"plan": "Free
 - Typy pojawiają się tylko tam, gdzie model ma historię i są spełnione progi.
 - Brak błędów krytycznych w podsumowaniu przebiegu (adnotacje „Pipeline”).
 - Aplikacja v0.3.x na telefonie pokazuje prawdziwe mecze.
+
+## Postęp (gałąź `etap-4`)
+| Krok | Stan | Co zrobiono |
+|---|---|---|
+| 1. football-data.org + tożsamość drużyn | ✅ | `providers/football_data_org.py` (statusy, wynik z czasu regulaminowego), `teams.py` (tabela `team_aliases`: nazwa ze źródła → jedno id drużyny), `ingest.store_fixtures(..., source)` scala ten sam mecz z dwóch źródeł (te same drużyny ±36 h, wynik nigdy nie jest cofany). Dopasowanie nazw rozumie skróty z CSV („Man United”, „Ein Frankfurt”, „Nott'm Forest”). |

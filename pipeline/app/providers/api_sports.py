@@ -1,11 +1,15 @@
-"""API-SPORTS adapters: API-Football (v3) and API-Basketball (v1). One free key covers both."""
+"""API-SPORTS adapters: API-Football (v3) and API-Basketball (v1). One free key covers both.
+
+Not used by the daily pipeline since ETAP 4 (the free plan only serves seasons 2022-2024).
+Kept for walk-forward backtests on those seasons (ETAP 5).
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
 from ..config import LeagueConfig
+from .common import Fixture, Injury, TeamRef
 from .http import ApiClient, ProviderError
 
 FOOTBALL_BASE = "https://v3.football.api-sports.io"
@@ -25,37 +29,6 @@ _BB_STATUS = {
     "POST": "postponed",
     **dict.fromkeys(["CANC", "SUSP", "AWD", "ABD"], "cancelled"),
 }
-
-
-@dataclass
-class TeamRef:
-    id: str
-    name: str
-    logo: str | None
-
-
-@dataclass
-class Fixture:
-    id: str
-    sport: str
-    league_key: str
-    season: str
-    home: TeamRef
-    away: TeamRef
-    kickoff: datetime
-    status: str
-    home_score: int | None
-    away_score: int | None
-    venue: str | None
-
-
-@dataclass
-class Injury:
-    team_id: str
-    player: str
-    kind: str | None
-    reason: str | None
-    fixture_id: str | None
 
 
 def _dt(s: str) -> datetime:
