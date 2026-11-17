@@ -38,6 +38,27 @@ jobs:
           ls "$ANDROID_HOME/build-tools" | tail -3
           ls "$ANDROID_HOME/platforms" | tail -3
 
+      # Fails fast (in seconds, before the long build) when the signing secrets are wrong.
+      - name: Kontrola klucza podpisu
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          EXPECTED_SHA256: 1c35f745bd082513930be01ab7138bbafc7c2d079d36a3d51dc7311f4ec91034
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "::warning::Brak sekretu ANDROID_KEYSTORE_B64 — zostanie zbudowany APK debug."; exit 0; fi
+          CLEAN=$(printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n\t')
+          echo "Długość ANDROID_KEYSTORE_B64: ${#CLEAN} znaków (oczekiwane: 3516). Długość hasła: ${#KEYSTORE_PASSWORD} (oczekiwane: 24)."
+          if [ "${#CLEAN}" -ne 3516 ]; then
+            echo "::error title=Zły sekret ANDROID_KEYSTORE_B64::Ma ${#CLEAN} znaków zamiast 3516. Wklej ponownie CAŁY długi tekst spod napisu ANDROID_KEYSTORE_B64 z pliku przewaga-podpis.txt (hasło ma 24 znaki: jeśli sekret ma 24, wartości są zamienione)."
+            exit 1
+          fi
+          printf '%s' "$CLEAN" | base64 -d > "$RUNNER_TEMP/k.jks" || { echo "::error title=Zły sekret ANDROID_KEYSTORE_B64::Tekst nie jest poprawnym base64 — wklej go ponownie w całości."; exit 1; }
+          GOT=$(sha256sum "$RUNNER_TEMP/k.jks" | cut -d' ' -f1)
+          if [ "$GOT" != "$EXPECTED_SHA256" ]; then echo "::error title=Zły sekret ANDROID_KEYSTORE_B64::Klucz różni się od pliku przewaga-podpis.txt — wklej ponownie."; exit 1; fi
+          keytool -list -keystore "$RUNNER_TEMP/k.jks" -storepass "$KEYSTORE_PASSWORD" -alias przewaga >/dev/null 2>&1 || { echo "::error title=Zły sekret ANDROID_KEYSTORE_PASSWORD::Hasło nie pasuje do klucza. Wklej ponownie 24-znakowe hasło spod napisu ANDROID_KEYSTORE_PASSWORD."; rm -f "$RUNNER_TEMP/k.jks"; exit 1; }
+          rm -f "$RUNNER_TEMP/k.jks"
+          echo "Klucz podpisu poprawny."
+
       - name: Wersja
         id: ver
         working-directory: frontend
