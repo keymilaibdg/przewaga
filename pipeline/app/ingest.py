@@ -4,13 +4,13 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timedelta
 
-from .config import LeagueConfig
+from .config import LeagueConfig, season_for
 from .db import upsert
 from . import teams
 from .matching import best_match
-from .providers.common import Fixture, Injury
+from .providers.common import Fixture, Injury, TeamRef
 from .providers.http import iso
-from .providers.odds_api import OddsEvent
+from .providers.odds_api import OddsEvent, OddsScore
 
 
 # Same pair of team ids within this window = the same match reported by two sources (CSV has no exact time).
@@ -98,7 +98,11 @@ def store_injuries(conn: sqlite3.Connection, lg: LeagueConfig, items: list[Injur
 
 
 def store_odds(conn: sqlite3.Connection, lg: LeagueConfig, events: list[OddsEvent], now: datetime) -> dict[str, int]:
-    """Match odds events to fixtures and append snapshots. Returns counters."""
+    """Match odds events to fixtures and append snapshots. Returns counters.
+
+    Leagues whose fixtures come from The Odds API itself (`fixtures_source == "odds"`) get the event created
+    when it is not known yet; elsewhere an unmatched odds event is only counted.
+    """
     rows = conn.execute(
         """SELECT e.id, e.kickoff, h.name AS home, a.name AS away FROM events e
            JOIN teams h ON h.id = e.home_team_id JOIN teams a ON a.id = e.away_team_id
@@ -107,14 +111,14 @@ def store_odds(conn: sqlite3.Connection, lg: LeagueConfig, events: list[OddsEven
     ).fetchall()
     fixtures = [(r["id"], r["home"], r["away"], datetime.fromisoformat(r["kickoff"].replace("Z", "+00:00"))) for r in rows]
 
-    matched = unmatched = quotes = 0
+    matched = unmatched = quotes = created = 0
     for oe in events:
-        hit = best_match(oe.home_team, oe.away_team, oe.commence_time, fixtures, get=lambda c: (c[1], c[2], c[3]))
-        if hit is None:
+        event_id, was_created = event_for_odds(conn, lg, oe, fixtures, now)
+        if event_id is None:
             unmatched += 1
             continue
         matched += 1
-        event_id = hit[0]
+        created += was_created
         conn.execute("UPDATE events SET odds_event_id = ? WHERE id = ?", (oe.id, event_id))
         for q in oe.quotes:
             sel = _selection(q.market, q.outcome_name, oe.home_team, oe.away_team)
@@ -128,7 +132,74 @@ def store_odds(conn: sqlite3.Connection, lg: LeagueConfig, events: list[OddsEven
             quotes += cur.rowcount
         _remember_bookmakers(conn, {q.bookmaker: q.bookmaker_title for q in oe.quotes})
     conn.commit()
-    return {"matched": matched, "unmatched": unmatched, "quotes": quotes}
+    return {"matched": matched, "unmatched": unmatched, "quotes": quotes, "created": created}
+
+
+def event_for_odds(conn: sqlite3.Connection, lg: LeagueConfig, oe: OddsEvent, fixtures: list, now: datetime) -> tuple[str | None, int]:
+    """Event id for an odds event: already linked -> name/time match -> same team ids -> create (odds leagues)."""
+    row = conn.execute("SELECT id FROM events WHERE id = ? OR odds_event_id = ? LIMIT 1", (f"odds:{oe.id}", oe.id)).fetchone()
+    if row:
+        if row["id"].startswith("odds:"):  # the odds feed is this event's schedule source: follow reschedules
+            conn.execute("UPDATE events SET kickoff = ?, updated_at = ? WHERE id = ? AND status = 'scheduled'", (iso(oe.commence_time), iso(now), row["id"]))
+        return row["id"], 0
+    hit = best_match(oe.home_team, oe.away_team, oe.commence_time, fixtures, get=lambda c: (c[1], c[2], c[3]))
+    if hit is not None:
+        return hit[0], 0
+    create = lg.fixtures_source == "odds"
+    hid = teams.resolve(conn, lg.key, "odds", TeamRef(None, oe.home_team), create=create)
+    aid = teams.resolve(conn, lg.key, "odds", TeamRef(None, oe.away_team), create=create)
+    if hid and aid and hid != aid:
+        same = conn.execute(
+            "SELECT id FROM events WHERE league_key = ? AND home_team_id = ? AND away_team_id = ? AND kickoff BETWEEN ? AND ?",
+            (lg.key, hid, aid, iso(oe.commence_time - SAME_EVENT_WINDOW), iso(oe.commence_time + SAME_EVENT_WINDOW)),
+        ).fetchone()
+        if same:
+            return same["id"], 0
+        if create:
+            eid = f"odds:{oe.id}"
+            upsert(conn, "events", {
+                "id": eid, "sport": lg.sport, "league_key": lg.key, "season": season_for(lg.sport, oe.commence_time),
+                "home_team_id": hid, "away_team_id": aid, "kickoff": iso(oe.commence_time), "status": "scheduled",
+                "home_score": None, "away_score": None, "venue": None, "odds_event_id": oe.id, "updated_at": iso(now),
+            })
+            return eid, 1
+    return None, 0
+
+
+def store_odds_events(conn: sqlite3.Connection, lg: LeagueConfig, events: list[OddsEvent], now: datetime) -> int:
+    """Schedule from The Odds API /events (free) for leagues without a fixtures API."""
+    rows = conn.execute("SELECT e.id, e.kickoff, h.name AS home, a.name AS away FROM events e JOIN teams h ON h.id = e.home_team_id JOIN teams a ON a.id = e.away_team_id WHERE e.league_key = ? AND e.status = 'scheduled'", (lg.key,)).fetchall()
+    fixtures = [(r["id"], r["home"], r["away"], datetime.fromisoformat(r["kickoff"].replace("Z", "+00:00"))) for r in rows]
+    n = 0
+    for oe in events:
+        eid, _ = event_for_odds(conn, lg, oe, fixtures, now)
+        if eid:
+            conn.execute("UPDATE events SET odds_event_id = ? WHERE id = ?", (oe.id, eid))
+            n += 1
+    conn.commit()
+    return n
+
+
+def store_scores(conn: sqlite3.Connection, lg: LeagueConfig, scores: list[OddsScore], now: datetime) -> int:
+    """Final results from The Odds API /scores. Unknown finished games of odds leagues are added as history."""
+    n = 0
+    for sc in scores:
+        if not sc.completed or sc.home_score is None or sc.away_score is None:
+            continue
+        row = conn.execute("SELECT * FROM events WHERE id = ? OR odds_event_id = ? LIMIT 1", (f"odds:{sc.id}", sc.id)).fetchone()
+        if row is None and lg.fixtures_source == "odds":
+            oe = OddsEvent(sc.id, sc.sport_key, sc.commence_time, sc.home_team, sc.away_team, [])
+            eid, _ = event_for_odds(conn, lg, oe, [], now)
+            row = conn.execute("SELECT * FROM events WHERE id = ?", (eid,)).fetchone() if eid else None
+        if row is None:
+            continue
+        conn.execute(
+            "UPDATE events SET status = 'finished', home_score = ?, away_score = ?, updated_at = ? WHERE id = ?",
+            (sc.home_score, sc.away_score, iso(now), row["id"]),
+        )
+        n += 1
+    conn.commit()
+    return n
 
 
 def _selection(market: str, name: str, home: str, away: str) -> str | None:

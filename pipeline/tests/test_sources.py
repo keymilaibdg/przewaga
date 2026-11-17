@@ -213,3 +213,61 @@ def test_per_minute_counters_are_not_a_daily_budget(conn):
     c = ApiClient("balldontlie", "https://example.test/v1", {}, conn, t, api_sports_budget(conn, "balldontlie", 60, 0, lambda: NOW), sleep=lambda s: None, clock=lambda: NOW)
     c.get("games")
     assert c.budget() == 59
+
+
+# ---------- The Odds API as a fixtures/results source ----------
+
+def _odds_event(eid, home, away, ko, price_home=2.1):
+    return {"id": eid, "sport_key": "soccer_poland_ekstraklasa", "commence_time": ko, "home_team": home, "away_team": away,
+            "bookmakers": [{"key": "pinnacle", "title": "Pinnacle", "last_update": "2026-11-17T06:00:00Z", "markets": [
+                {"key": "h2h", "outcomes": [{"name": home, "price": price_home}, {"name": "Draw", "price": 3.4}, {"name": away, "price": 3.6}]}]}]}
+
+
+def test_odds_league_events_odds_and_scores(conn):
+    from app.config import LEAGUE_BY_KEY
+    from app.providers.fd_csv import parse
+    from app.providers.odds_api import OddsApi
+
+    lg = LEAGUE_BY_KEY["ekstraklasa"]
+    # history from the CSV first (names 'Lech', 'Gornik Z.')
+    ingest.store_fixtures(conn, parse(POL, "ekstraklasa", {"2025", "2026"}), NOW, "csv")
+    routes = {
+        "/events": [{"id": "e1", "sport_key": lg.odds_key, "commence_time": "2026-11-21T17:30:00Z", "home_team": "Lech Poznań", "away_team": "Górnik Zabrze"}],
+        "/odds": [_odds_event("e1", "Lech Poznań", "Górnik Zabrze", "2026-11-21T17:30:00Z")],
+        "/scores": [
+            {"id": "e1", "sport_key": lg.odds_key, "commence_time": "2026-11-21T17:30:00Z", "completed": True, "home_team": "Lech Poznań", "away_team": "Górnik Zabrze",
+             "scores": [{"name": "Lech Poznań", "score": "2"}, {"name": "Górnik Zabrze", "score": "2"}]},
+            {"id": "e0", "sport_key": lg.odds_key, "commence_time": "2026-11-15T15:00:00Z", "completed": True, "home_team": "Raków Częstochowa", "away_team": "Lech Poznań",
+             "scores": [{"name": "Raków Częstochowa", "score": "1"}, {"name": "Lech Poznań", "score": "0"}]},
+            {"id": "e9", "sport_key": lg.odds_key, "commence_time": "2026-11-23T15:00:00Z", "completed": False, "home_team": "A", "away_team": "B", "scores": None},
+        ],
+    }
+    t = Canned(routes, headers={"x-requests-last": "0"})
+    api = OddsApi(client(conn, t, provider="the-odds-api", auth={"apiKey": "o"}))
+    assert ingest.store_odds_events(conn, lg, api.events(lg.odds_key), NOW) == 1
+    ev = conn.execute("SELECT * FROM events WHERE id = 'odds:e1'").fetchone()
+    assert ev and ev["status"] == "scheduled" and ev["season"] == "2026"
+    lech = teams.resolve(conn, "ekstraklasa", "csv", TeamRef(None, "Lech"))
+    assert ev["home_team_id"] == lech, "odds names land on the CSV history teams -> the model knows them"
+
+    res = ingest.store_odds(conn, lg, api.odds(lg.odds_key, "h2h", "eu"), NOW)
+    assert res["matched"] == 1 and res["created"] == 0 and res["quotes"] == 3
+
+    assert ingest.store_scores(conn, lg, api.scores(lg.odds_key), NOW) == 2
+    ev = conn.execute("SELECT * FROM events WHERE id = 'odds:e1'").fetchone()
+    assert (ev["status"], ev["home_score"], ev["away_score"]) == ("finished", 2, 2)
+    # a finished game never seen in /odds becomes history (teams resolved onto the CSV names)
+    assert conn.execute("SELECT status FROM events WHERE id = 'odds:e0'").fetchone()["status"] == "finished"
+    assert "daysFrom=3" in next(u for u, _ in t.calls if "/scores" in u)
+    assert "apiKey" not in conn.execute("SELECT params FROM provider_calls WHERE endpoint LIKE '%scores'").fetchone()["params"]
+
+
+def test_unmatched_odds_never_create_events_in_fixture_api_leagues(conn):
+    from app.config import LEAGUE_BY_KEY
+    from app.providers.odds_api import OddsEvent
+
+    lg = LEAGUE_BY_KEY["epl"]
+    oe = OddsEvent("x", lg.odds_key, NOW + timedelta(days=1), "Arsenal", "Chelsea", [])
+    assert ingest.store_odds(conn, lg, [oe], NOW) == {"matched": 0, "unmatched": 1, "quotes": 0, "created": 0}
+    assert conn.execute("SELECT COUNT(*) n FROM events").fetchone()["n"] == 0
+    assert conn.execute("SELECT COUNT(*) n FROM teams").fetchone()["n"] == 0
