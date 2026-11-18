@@ -12,7 +12,15 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Callable
 
-from ..config import MAX_ODDS_AGE_H, MAX_PRICE
+from ..config import (
+    MARKET_MAX_OVER_MEDIAN,
+    MARKET_MAX_PRICE,
+    MARKET_MAX_REF_MARGIN,
+    MARKET_MIN_BOOKS,
+    MARKET_MIN_EV,
+    MAX_ODDS_AGE_H,
+    MAX_PRICE,
+)
 from ..params import LeagueParams
 from .odds import expected_value, fair_probabilities, implied_probability, overround
 
@@ -50,6 +58,7 @@ class Market:
     selections: list[Selection]
     margin: float | None = None
     verdict: str = ""
+    ref_book: str | None = None  # book whose margin-free prices are the reference
 
 
 @dataclass
@@ -62,6 +71,9 @@ class Candidate:
     quality: int
     risk: str
     hw: float
+    kind: str = "model"  # model | market (price above the margin-free reference, no model involved)
+    books: int = 0
+    median: float | None = None
 
 
 @dataclass
@@ -96,10 +108,12 @@ def price_market(mk: Market, half_width: Callable[[float], float], ctx: Context)
         ref_prices = [next(q.price for q in s.quotes if q.bookmaker == ref) for s in mk.selections]
         fair = fair_probabilities(ref_prices)
         mk.margin = overround(ref_prices)
+        mk.ref_book = ref
     else:
         med = [statistics.median(q.price for q in s.quotes) if s.quotes else 0 for s in mk.selections]
         fair = fair_probabilities(med) if all(m > 1 for m in med) else [s.raw_model_prob for s in mk.selections]
         mk.margin = None
+        mk.ref_book = None
 
     pp = ctx.params
     mp = pp.market(mk.market)
@@ -144,6 +158,36 @@ def price_market(mk: Market, half_width: Callable[[float], float], ctx: Context)
     elif top:
         mk.verdict = f"„{top.sel.label}”: EV {fmt_signed(top.ev)}, ale ocena jakości {top.quality} < {pp.min_quality} lub warunki niespełnione."
     return valid
+
+
+def market_candidates(mk: Market, ctx: Context, medians: list[float | None] | None = None, min_books: int = MARKET_MIN_BOOKS) -> list[Candidate]:
+    """"Tryb rynkowy": selections where some bookmaker pays at least MARKET_MIN_EV above the margin-free price of the
+    reference (lowest-margin) book. Call after price_market (which sets fair_prob and ref_book).
+
+    Guards: low-margin reference, enough books, best price not an outlier against the median (stale / wrong quotes),
+    half-point lines only, price cap, kick-off more than 30 minutes away. `medians`: backtest substitute for quotes.
+    """
+    if mk.ref_book is None or mk.margin is None or mk.margin > MARKET_MAX_REF_MARGIN or ctx.kickoff - ctx.now <= timedelta(minutes=30):
+        return []
+    fresh_cut = ctx.now - timedelta(hours=MAX_ODDS_AGE_H)
+    out: list[Candidate] = []
+    for i, s in enumerate(mk.selections):
+        if not (s.line is None or abs(s.line * 2) % 2 == 1) or s.fair_prob <= 0:
+            continue
+        others = [q for q in s.quotes if q.bookmaker != mk.ref_book and q.captured_at >= fresh_cut]
+        if len(others) < min_books or not others:
+            continue
+        best = max(others, key=lambda q: q.price)
+        med = medians[i] if medians is not None else statistics.median(q.price for q in s.quotes)
+        if med is None or best.price > med * (1 + MARKET_MAX_OVER_MEDIAN) or best.price > MARKET_MAX_PRICE:
+            continue
+        ev = s.fair_prob * best.price - 1
+        if ev < MARKET_MIN_EV:
+            continue
+        q = int(round(min(85, 55 + 400 * min(ev, 0.06) + min(8, len(s.quotes) / 3))))
+        hw = 0.01
+        out.append(Candidate(mk, s, best, ev, implied_probability(best.price), q, risk(hw, best.price, 0.8), hw, "market", len(s.quotes), med))
+    return out
 
 
 def recommendable(c: Candidate, ctx: Context) -> bool:

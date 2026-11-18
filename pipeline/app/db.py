@@ -78,6 +78,17 @@ CREATE TABLE IF NOT EXISTS injuries (
     UNIQUE(team_id, player, fixture_event_id)
 );
 
+-- ClubElo ratings (latest download only; replaced on every fetch)
+CREATE TABLE IF NOT EXISTS clubelo (
+    club TEXT NOT NULL,
+    country TEXT NOT NULL,
+    level INTEGER,
+    elo REAL NOT NULL,
+    rank INTEGER,
+    as_of TEXT NOT NULL,
+    PRIMARY KEY (club, country)
+);
+
 CREATE TABLE IF NOT EXISTS recommendations (
     id TEXT PRIMARY KEY,              -- '<event_id>:<market>:<selection>:<line>'
     event_id TEXT NOT NULL REFERENCES events(id),
@@ -106,7 +117,8 @@ CREATE TABLE IF NOT EXISTS recommendations (
     closing_price REAL,
     result TEXT,                      -- won | lost | void | pending
     profit REAL,
-    settled_at TEXT
+    settled_at TEXT,
+    kind TEXT NOT NULL DEFAULT 'model' -- model | market (price above the margin-free market, no model)
 );
 CREATE INDEX IF NOT EXISTS ix_recs_event ON recommendations(event_id);
 
@@ -140,7 +152,16 @@ def connect(path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    migrate(conn)
     return conn
+
+
+def migrate(conn: sqlite3.Connection) -> None:
+    """Columns added after the database was first created (the committed database is long-lived)."""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(recommendations)")}
+    if "kind" not in cols:
+        conn.execute("ALTER TABLE recommendations ADD COLUMN kind TEXT NOT NULL DEFAULT 'model'")
+        conn.commit()
 
 
 @contextmanager

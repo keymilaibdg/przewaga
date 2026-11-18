@@ -89,6 +89,10 @@ export function ProfilePage() {
         {books.data?.length === 0 && <p className="py-3 text-xs text-fg-faint">Brak danych o bukmacherach — pojawią się po pierwszym pobraniu kursów.</p>}
       </Group>
 
+      <Group title="Okazje rynkowe" desc="Typy bez modelu: kurs bukmachera wyższy od uczciwego kursu rynku. Przewaga z porównania kursów — szczegóły przy każdym typie.">
+        <Toggle label="Pokazuj okazje rynkowe" checked={settings.marketMode !== false} onChange={(v) => set("marketMode", v)} />
+      </Group>
+
       <Group
         title="Powiadomienia"
         desc={

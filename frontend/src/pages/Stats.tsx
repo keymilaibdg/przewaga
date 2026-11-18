@@ -68,7 +68,7 @@ function ModelStatusCard() {
     <Card className="mb-4 p-4">
       <h3 className="text-sm font-semibold">Status modeli</h3>
       <p className="mt-0.5 mb-3 text-xs text-fg-faint">
-        Typy pojawiają się tylko tam, gdzie model w teście walk-forward poprawił prognozę rynku bez marży. Wynik niżej: symulowane typy z okresu testowego (dane wyłącznie sprzed meczu).
+        Typy modelu pojawiają się tylko tam, gdzie model w teście walk-forward poprawił prognozę rynku bez marży. Okazje rynkowe (bez modelu) działają we wszystkich ligach z kursami. Wynik niżej: symulacja okazji rynkowych na historii (kurs z rynku przed meczem).
       </p>
       <ul className="space-y-3">
         {q.data.map((m) => (

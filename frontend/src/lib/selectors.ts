@@ -8,6 +8,7 @@ export function visibleRecs(evt: SportEvent, s: UserSettings): Recommendation[] 
   return evt.recommendations.filter(
     (r) =>
       r.status === "active" &&
+      (s.marketMode !== false || r.kind !== "market") &&
       r.quality >= s.minQuality &&
       r.ev >= s.minEv &&
       RISK_ORDER[r.risk] <= RISK_ORDER[s.maxRisk] &&

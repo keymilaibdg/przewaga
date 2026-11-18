@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   unitStake: 10,
   stakeTax: 0.12,
   dailyLimitUnits: 5,
+  marketMode: true,
 };
 
 export function loadSettings(): UserSettings {

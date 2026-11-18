@@ -15,7 +15,7 @@ on:
         options: [run, ratings]
         default: run
   push:
-    branches: [analiza-kursu]
+    branches: [kontuzje-clubelo]
     paths:
       - "pipeline/app/backtest/**"
       - ".github/workflows/backtest.yml"

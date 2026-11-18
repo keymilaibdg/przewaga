@@ -113,6 +113,8 @@ export interface Recommendation {
   updatedAt: string;
   status: "active" | "withdrawn";
   withdrawReason?: string;
+  /** "market": a bookmaker pays more than the margin-free price of the sharpest book (tryb rynkowy, no model). */
+  kind?: "model" | "market";
 }
 
 export type FormResult = "W" | "D" | "L";
@@ -353,6 +355,8 @@ export interface UserSettings {
     /** Reminder one hour before a match from the coupon (APK). */
     couponReminders: boolean;
   };
+  /** Show market-mode tips (price above the margin-free market; no model). */
+  marketMode: boolean;
   unitStake: number;
   /** Tax deducted from the stake by the user's bookmaker (Poland: 0.12; tax-free promo: 0). */
   stakeTax: number;

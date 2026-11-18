@@ -125,7 +125,11 @@ def calibrate_league(lg: str, rows: list[E.Row], cutoff: datetime, xi: float, no
         mr.sim_hold = E.summarize([b for b in hold_bets if b.row.market == m])
         mr.status, mr.reason = E.decide(mr)
     p = E.league_params(lg, results, thresholds, xi, iso(now))
+    market_bets = E.simulate_market(rows)
+    rep_market = {"all": E.summarize(market_bets), "hold": E.summarize([b for b in market_bets if b.row.kickoff >= cutoff]),
+                  "by_market": {m: E.summarize([b for b in market_bets if b.row.market == m]) for m in sorted({b.row.market for b in market_bets})}}
     rep = {
+        "market_mode": rep_market,
         "rows_tune": len(tune),
         "rows_hold": len(hold),
         "seasons": sorted({r.season for r in rows}),
@@ -139,7 +143,7 @@ def calibrate_league(lg: str, rows: list[E.Row], cutoff: datetime, xi: float, no
         "markets": {m: _market_report(mr) for m, mr in results.items()},
         "status": p.status,
     }
-    return p, rep, hold_bets
+    return p, rep, market_bets
 
 
 def _market_report(mr: E.MarketResult) -> dict:

@@ -114,6 +114,7 @@ def rec_json(r: sqlite3.Row, sport: str) -> dict[str, Any]:
         "generatedAt": r["generated_at"],
         "updatedAt": r["updated_at"],
         "status": "withdrawn" if r["status"] == "withdrawn" else "active",
+        "kind": r["kind"] if "kind" in r.keys() else "model",
         **({"withdrawReason": r["withdraw_reason"]} if r["withdraw_reason"] else {}),
     }
 
@@ -167,14 +168,26 @@ def stats_json(sport: str, fh: list[dict], fa: list[dict], ea: EventAnalysis) ->
     ]
 
 
+NBA_STATUS = {"Out": ("injury", "nie zagra"), "Doubtful": ("doubtful", "raczej nie zagra"), "Questionable": ("doubtful", "niepewny"), "Probable": ("doubtful", "raczej zagra")}
+
+
 def absences_json(conn: sqlite3.Connection, ev: sqlite3.Row, now: datetime) -> list[dict[str, Any]] | None:
     fetched = conn.execute("SELECT 1 FROM injuries WHERE league_key = ? AND fetched_at >= ? LIMIT 1", (ev["league_key"], iso(now - timedelta(hours=36)))).fetchone()
-    if ev["sport"] != "football" or not fetched:
+    if not fetched:
         return None
     rows = conn.execute(
         "SELECT * FROM injuries WHERE team_id IN (?, ?) AND (fixture_event_id = ? OR fixture_event_id IS NULL)",
         (ev["home_team_id"], ev["away_team_id"], ev["id"]),
     ).fetchall()
+    if ev["sport"] == "basketball":  # official NBA injury report; G League assignments and 'Available' are not absences
+        out = []
+        for r in rows:
+            st = NBA_STATUS.get(r["kind"] or "")
+            if st is None or (r["reason"] or "").startswith("G League"):
+                continue
+            out.append({"player": r["player"], "team": "home" if r["team_id"] == ev["home_team_id"] else "away", "reason": st[0], "importance": "regular", "note": f"{st[1]} — {r['reason']}" if r["reason"] else st[1]})
+        order = {"injury": 0, "doubtful": 1}
+        return sorted(out, key=lambda a: (a["team"], order.get(a["reason"], 2)))
     kind = lambda r: "doubtful" if (r["kind"] or "").lower().startswith("question") else ("suspension" if "suspen" in (r["reason"] or "").lower() or "card" in (r["reason"] or "").lower() else "injury")  # noqa: E731
     return [
         {"player": r["player"], "team": "home" if r["team_id"] == ev["home_team_id"] else "away", "reason": kind(r), "importance": "regular", "note": r["reason"]}
@@ -227,13 +240,15 @@ def event_json(conn: sqlite3.Connection, ea: EventAnalysis, now: datetime) -> di
         flags.append("Brak xG w darmowym źródle — model oparty na bramkach")
     if absences is None:
         flags.append("Brak danych o kontuzjach w darmowych źródłach")
+    elif ev["sport"] == "basketball":
+        flags.append("Nieobecności z oficjalnego raportu NBA — model nie zna wagi zawodników, sprawdź, czy brakuje liderów")
     inj_ts = conn.execute("SELECT MAX(fetched_at) AS t FROM injuries WHERE league_key = ?", (ev["league_key"],)).fetchone()["t"]
     fixtures_provider = FIXTURES_PROVIDER[lg.fixtures_source]
     sources = [
         {"kind": "fixtures", "provider": fixtures_provider, "updatedAt": ev["updated_at"], "freshness": freshness(parse(ev["updated_at"]), now, 26)},
         {"kind": "odds", "provider": "The Odds API", "updatedAt": iso(ea.odds_updated) if ea.odds_updated else None, "freshness": freshness(ea.odds_updated, now, MAX_ODDS_AGE_H)},
         {"kind": "stats", "provider": stats_provider(lg.key), "updatedAt": ev["updated_at"], "freshness": freshness(parse(ev["updated_at"]), now, 26)},
-        {"kind": "injuries", "provider": "—", "updatedAt": inj_ts if absences is not None else None, "freshness": "fresh" if absences is not None else "missing"},
+        {"kind": "injuries", "provider": "Raport kontuzji NBA" if ev["sport"] == "basketball" and absences is not None else "—", "updatedAt": inj_ts if absences is not None else None, "freshness": "fresh" if absences is not None else "missing"},
         {"kind": "lineups", "provider": "—", "updatedAt": None, "freshness": "missing"},
     ]
     if ev["sport"] == "football":
@@ -328,6 +343,8 @@ def provider_health(conn: sqlite3.Connection, configured: dict[str, bool]) -> li
         "football-data-csv": ("football-data.co.uk", "Historia wyników do modelu (PL, La Liga, Bundesliga, Ekstraklasa)"),
         "balldontlie": ("balldontlie", "Mecze i wyniki NBA"),
         "the-odds-api": ("The Odds API", "Kursy bukmacherów; terminarz i wyniki Ligi Europy, Ekstraklasy i Euroligi"),
+        "nba-injury-report": ("Raport kontuzji NBA", "Oficjalny raport ligi (PDF): kto nie zagra w najbliższych meczach NBA"),
+        "clubelo": ("ClubElo", "Niezależny ranking siły klubów europejskich (porównanie z modelem)"),
     }
     out = []
     for pid, (name, purpose) in meta.items():
