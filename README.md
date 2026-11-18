@@ -55,6 +55,6 @@ frontend/src/
 cd pipeline
 pip install -r requirements.txt
 python -m pytest                      # testy offline (symulowane API)
-APISPORTS_KEY=... ODDS_API_KEY=... python -m app.cli run --kind morning
+FOOTBALL_DATA_KEY=... BALLDONTLIE_KEY=... ODDS_API_KEY=... python -m app.cli run --kind morning
 python -m app.cli status              # pozostałe limity zapytań
 ```

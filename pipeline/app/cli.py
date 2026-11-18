@@ -216,7 +216,7 @@ class Pipeline:
             history, scores = 0, {}
             odds = self.fetch_odds(horizon_h=10)
         result = self.analyse_and_publish(kind)
-        summary = {"fixtures": fixtures, "history": history, "scores": scores, "odds_matched": odds, **result, "errors": self.errors}
+        summary = {"fixtures": fixtures, "csv_history": history, "scores": scores, "odds_matched": odds, **result, "errors": self.errors}
         critical = [e for e in self.errors if not e.startswith("uwaga")]
         self.conn.execute("UPDATE runs SET finished_at = ?, ok = ?, summary = ? WHERE id = ?", (iso(self.clock()), int(not critical), dumps(summary), run_id))
         self.conn.commit()

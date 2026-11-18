@@ -1,7 +1,9 @@
-"""Offline fake of API-Football, API-Basketball and The Odds API with realistic response shapes.
+"""Offline fake of football-data.org, football-data.co.uk CSV, balldontlie and The Odds API (realistic shapes).
 
-A small synthetic world: one football league (Premier League) and NBA, previous + current season,
-results generated from known team strengths, odds that sometimes misprice so the engine has something to find.
+A small synthetic world: Premier League and NBA (previous + current season) with results generated from known
+team strengths, odds that sometimes misprice so the engine has something to find, and two Europa League games
+known only from The Odds API (/events, /odds, /scores) to exercise the odds-only path.
+Every source spells team names its own way, as in reality.
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ import urllib.parse
 import zlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from app.providers.http import HttpResponse
 
@@ -20,8 +23,11 @@ FB_TEAMS = [
     (34, "Newcastle", 1.10, 0.95), (66, "Aston Villa", 1.10, 1.00), (51, "Brighton", 1.05, 1.05),
     (48, "West Ham", 0.95, 1.15),
 ]
-# Odds API spells some names differently — the matcher must cope.
+# Each source spells some names differently — the matcher and the team resolver must cope.
 ODDS_NAMES = {"Tottenham": "Tottenham Hotspur", "Newcastle": "Newcastle United", "Brighton": "Brighton and Hove Albion", "West Ham": "West Ham United"}
+FDO_NAMES = {"Tottenham": "Tottenham Hotspur FC", "Newcastle": "Newcastle United FC", "Brighton": "Brighton & Hove Albion FC", "West Ham": "West Ham United FC"}
+CSV_NAMES = {"Manchester United": "Man United", "Manchester City": "Man City"}
+UEL = [("Roma", "Porto", 30), ("Lyon", "Real Betis", 33)]  # home, away, hours after the first NOW
 BB_TEAMS = [(132, "Boston Celtics", 7.0), (145, "Los Angeles Lakers", 1.0), (139, "Denver Nuggets", 4.0), (149, "Milwaukee Bucks", 1.5), (141, "Golden State Warriors", 0.5), (152, "New York Knicks", 3.5)]
 
 
@@ -40,6 +46,7 @@ class FakeWorld:
 
     def __post_init__(self) -> None:
         rng = random.Random(self.seed)
+        self.uel = [{"id": f"uel-{i}", "h": h, "a": a, "ko": self.now + timedelta(hours=dh), "_hg": 1 + i, "_ag": 1} for i, (h, a, dh) in enumerate(UEL)]
         self.fixtures: list[dict] = []
         fid = 1000
         for season, start in (("2025", datetime(2025, 8, 15, tzinfo=timezone.utc)), ("2026", self.now - timedelta(days=35))):
@@ -95,65 +102,84 @@ class FakeWorld:
             if key in path and self.fail_next[key] > 0:
                 self.fail_next[key] -= 1
                 return HttpResponse(429, {}, {"message": "Too many requests"})
-        if "football.api-sports.io" in u.netloc:
-            if headers.get("x-apisports-key") != "test-key":
-                return HttpResponse(200, {}, {"errors": {"token": "Error/Missing application key."}, "response": []})
-            return self._football(path, q)
-        if "basketball.api-sports.io" in u.netloc:
-            return self._basketball(path, q)
+        if u.netloc == "api.football-data.org":
+            if headers.get("X-Auth-Token") != "test-fdo":
+                return HttpResponse(403, {}, {"message": "The resource you are looking for is restricted. Please pass a valid API token.", "errorCode": 403})
+            return self._fdo(path)
+        if u.netloc == "www.football-data.co.uk":
+            return self._csv(path)
+        if u.netloc == "api.balldontlie.io":
+            if headers.get("Authorization") != "test-bdl":
+                return HttpResponse(401, {}, {"error": "Unauthorized"})
+            return self._bdl(q)
         if "the-odds-api.com" in u.netloc:
             return self._odds(path, q)
         return HttpResponse(404, {}, {"message": "not found"})
 
-    def _hdr(self) -> dict[str, str]:
-        return {"x-ratelimit-requests-remaining": "90"}
+    def _fdo(self, path: str) -> HttpResponse:
+        hdr = {"x-requests-available-minute": "9"}
+        if not path.endswith("/competitions/PL/matches"):
+            return HttpResponse(200, hdr, {"matches": []})
+        team = lambda t: {"id": t[0], "name": FDO_NAMES.get(t[1], t[1] + " FC"), "shortName": t[1], "tla": t[1][:3].upper(), "crest": f"https://crests.example/{t[0]}.png"}  # noqa: E731
+        matches = []
+        for f in self.fixtures:
+            if f["season"] != "2026":
+                continue
+            hg, ag = self.score(f)
+            matches.append({"id": f["id"], "utcDate": f["ko"].strftime("%Y-%m-%dT%H:%M:%SZ"), "status": "FINISHED" if hg is not None else "TIMED", "venue": "Stadium",
+                            "homeTeam": team(f["h"]), "awayTeam": team(f["a"]), "score": {"duration": "REGULAR", "fullTime": {"home": hg, "away": ag}}})
+        return HttpResponse(200, hdr, {"matches": matches})
 
-    def _football(self, path: str, q: dict) -> HttpResponse:
-        if path.endswith("/leagues"):
-            return HttpResponse(200, self._hdr(), {"errors": [], "response": [{"league": {"id": 39, "name": "Premier League"}, "country": {"name": "England"}}] if q.get("name") == "Premier League" else []})
-        if path.endswith("/fixtures"):
-            if q.get("league") != "39":
-                return HttpResponse(200, self._hdr(), {"errors": [], "response": []})
-            resp = []
-            for f in self.fixtures:
-                if f["season"] != q.get("season"):
-                    continue
-                hg, ag = self.score(f)
-                st = "FT" if hg is not None else "NS"
-                resp.append({
-                    "fixture": {"id": f["id"], "date": _iso(f["ko"]), "venue": {"name": "Stadium"}, "status": {"short": st}},
-                    "teams": {"home": {"id": f["h"][0], "name": f["h"][1], "logo": None}, "away": {"id": f["a"][0], "name": f["a"][1], "logo": None}},
-                    "goals": {"home": hg, "away": ag},
-                    "score": {"fulltime": {"home": hg, "away": ag}},
-                })
-            return HttpResponse(200, self._hdr(), {"errors": [], "response": resp})
-        if path.endswith("/injuries"):
-            up = [f for f in self.fixtures if not self.played(f)][:3]
-            resp = [{"player": {"name": f"Player {i}", "type": "Missing Fixture", "reason": "Knee Injury"}, "team": {"id": f["h"][0]}, "fixture": {"id": f["id"]}} for i, f in enumerate(up)]
-            return HttpResponse(200, self._hdr(), {"errors": [], "response": resp})
-        return HttpResponse(200, self._hdr(), {"errors": [], "response": []})
+    def _csv(self, path: str) -> HttpResponse:
+        season = {"/mmz4281/2526/E0.csv": "2025", "/mmz4281/2627/E0.csv": "2026"}.get(path)
+        if season is None:
+            return HttpResponse(404, {"content-type": "text/html"}, "<html>Not Found</html>")
+        uk = ZoneInfo("Europe/London")
+        lines = ["Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR,PSCH,PSCD,PSCA"]
+        for f in self.fixtures:
+            hg, ag = self.score(f)
+            if f["season"] != season or hg is None:
+                continue
+            ko = f["ko"].astimezone(uk)
+            name = lambda t: CSV_NAMES.get(t[1], t[1])  # noqa: E731
+            lines.append(f"E0,{ko:%d/%m/%Y},{ko:%H:%M},{name(f['h'])},{name(f['a'])},{hg},{ag},{'H' if hg > ag else 'D' if hg == ag else 'A'},2.0,3.4,3.8")
+        return HttpResponse(200, {"content-type": "text/csv"}, "\n".join(lines) + "\n")
 
-    def _basketball(self, path: str, q: dict) -> HttpResponse:
-        if path.endswith("/leagues"):
-            resp = [{"id": 12, "name": "NBA", "country": {"name": "USA"}}] if q.get("search") == "NBA" else []
-            return HttpResponse(200, self._hdr(), {"errors": [], "response": resp})
-        if path.endswith("/games"):
-            if q.get("league") != "12":
-                return HttpResponse(200, self._hdr(), {"errors": [], "response": []})
-            resp = [
-                {
-                    "id": g["id"], "date": _iso(g["ko"]), "status": {"short": "FT" if self.played(g) else "NS"},
-                    "teams": {"home": {"id": g["h"][0], "name": g["h"][1], "logo": None}, "away": {"id": g["a"][0], "name": g["a"][1], "logo": None}},
-                    "scores": {"home": {"total": self.score(g)[0]}, "away": {"total": self.score(g)[1]}},
-                }
-                for g in self.games if g["season"] == q.get("season")
-            ]
-            return HttpResponse(200, self._hdr(), {"errors": [], "response": resp})
-        return HttpResponse(200, self._hdr(), {"errors": [], "response": []})
+    def _bdl(self, q: dict) -> HttpResponse:
+        season = int(q["seasons[]"])
+        games = [g for g in self.games if int(g["season"][:4]) == season]
+        if "start_date" in q:
+            lo, hi = q["start_date"], q.get("end_date", "9999")
+            games = [g for g in games if lo <= g["ko"].date().isoformat() <= hi]
+        per, start = int(q.get("per_page", 25)), int(q.get("cursor", 0))
+        page = games[start:start + per]
+        team = lambda t: {"id": t[0], "full_name": t[1], "name": t[1].split()[-1], "abbreviation": t[1][:3].upper()}  # noqa: E731
+        data = []
+        for g in page:
+            hp, ap = self.score(g)
+            data.append({"id": g["id"], "date": g["ko"].date().isoformat(), "datetime": g["ko"].strftime("%Y-%m-%dT%H:%M:%S.000Z"), "season": season,
+                         "status": "Final" if hp is not None else g["ko"].strftime("%Y-%m-%dT%H:%M:%SZ"), "period": 4 if hp is not None else 0,
+                         "home_team_score": hp or 0, "visitor_team_score": ap or 0, "home_team": team(g["h"]), "visitor_team": team(g["a"])})
+        meta = {"per_page": per, **({"next_cursor": start + per} if start + per < len(games) else {})}
+        return HttpResponse(200, {"x-ratelimit-remaining": "4"}, {"data": data, "meta": meta})
 
     def _odds(self, path: str, q: dict) -> HttpResponse:
         if q.get("apiKey") != "test-odds":
             return HttpResponse(401, {}, {"message": "API key is not valid"})
+        if path.endswith("/events"):
+            hdr = {"x-requests-remaining": str(self.odds_remaining), "x-requests-last": "0"}
+            evs = [{"id": e["id"], "sport_key": "soccer_uefa_europa_league", "commence_time": e["ko"].strftime("%Y-%m-%dT%H:%M:%SZ"), "home_team": e["h"], "away_team": e["a"]}
+                   for e in self.uel if "europa" in path and e["ko"] > self.now]
+            return HttpResponse(200, hdr, evs)
+        if path.endswith("/scores"):
+            self.odds_remaining -= 2
+            hdr = {"x-requests-remaining": str(self.odds_remaining), "x-requests-last": "2"}
+            out = []
+            for e in self.uel if "europa" in path else []:
+                done = e["ko"] + timedelta(hours=2.5) < self.now
+                out.append({"id": e["id"], "sport_key": "soccer_uefa_europa_league", "commence_time": e["ko"].strftime("%Y-%m-%dT%H:%M:%SZ"), "completed": done,
+                            "home_team": e["h"], "away_team": e["a"], "scores": [{"name": e["h"], "score": str(e["_hg"])}, {"name": e["a"], "score": str(e["_ag"])}] if done else None})
+            return HttpResponse(200, hdr, out)
         cost = len(q["markets"].split(",")) * len(q["regions"].split(","))
         self.odds_remaining -= cost
         hdr = {"x-requests-remaining": str(self.odds_remaining), "x-requests-last": str(cost)}
@@ -180,6 +206,15 @@ class FakeWorld:
                         {"key": "totals", "outcomes": [{"name": "Over", "price": round(1 / (po * (1 + margin)), 2), "point": 2.5}, {"name": "Under", "price": round(1 / ((1 - po) * (1 + margin)), 2), "point": 2.5}]},
                     ]})
                 out.append({"id": f"odds-{f['id']}", "sport_key": "soccer_epl", "commence_time": f["ko"].strftime("%Y-%m-%dT%H:%M:%SZ"), "home_team": hn, "away_team": an, "bookmakers": books})
+        if "europa" in path:
+            for e in self.uel:
+                if not (self.now < e["ko"] < horizon):
+                    continue
+                books = [{"key": key, "title": title, "last_update": _iso(self.now - timedelta(minutes=5)), "markets": [
+                    {"key": "h2h", "outcomes": [{"name": e["h"], "price": round(2.3 * m, 2)}, {"name": "Draw", "price": round(3.3 * m, 2)}, {"name": e["a"], "price": round(3.2 * m, 2)}]},
+                    {"key": "totals", "outcomes": [{"name": "Over", "price": round(1.95 * m, 2), "point": 2.5}, {"name": "Under", "price": round(1.85 * m, 2), "point": 2.5}]},
+                ]} for key, title, m in (("pinnacle", "Pinnacle", 1.0), ("unibet_eu", "Unibet", 0.97))]
+                out.append({"id": e["id"], "sport_key": "soccer_uefa_europa_league", "commence_time": e["ko"].strftime("%Y-%m-%dT%H:%M:%SZ"), "home_team": e["h"], "away_team": e["a"], "bookmakers": books})
         if "basketball_nba" in path:
             for g in self.games:
                 if self.played(g) or not (self.now < g["ko"] < horizon):

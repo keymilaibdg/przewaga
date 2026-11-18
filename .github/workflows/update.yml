@@ -24,7 +24,8 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # First run downloads two NBA seasons from balldontlie (5 requests/min): ~6 minutes of pauses.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -51,7 +52,8 @@ jobs:
       - name: Pobranie danych, analiza, eksport JSON
         working-directory: pipeline
         env:
-          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+          BALLDONTLIE_KEY: ${{ secrets.BALLDONTLIE_KEY }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           PRZEWAGA_PUBLISH_DIR: ${{ runner.temp }}/publish
         run: |
@@ -63,9 +65,10 @@ jobs:
           s = json.load(open(sys.argv[1]))
           for e in s.get("errors", [])[:10]:
               print(f"::warning title=Pipeline::{e}")
+          print(f"::notice title=Pipeline::mecze {s.get('fixtures')} | historia CSV {s.get('csv_history')} | kursy {s.get('odds_matched')} | wydarzenia w JSON {s.get('events')} | nowe typy {s.get('new')}")
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as out:
               out.write("### Wynik aktualizacji\n")
-              for k in ("fixtures", "injuries", "odds_matched", "settled", "new", "updated", "withdrawn", "events", "history"):
+              for k in ("fixtures", "csv_history", "scores", "odds_matched", "settled", "new", "updated", "withdrawn", "events", "history"):
                   out.write(f"- **{k}**: {s.get(k)}\n")
               out.write(f"- **błędy**: {len(s.get('errors', []))}\n")
               for e in s.get("errors", []):
@@ -79,7 +82,8 @@ jobs:
           git add pipeline/data/przewaga.sqlite3
           if ! git diff --cached --quiet; then
             git commit -m "dane: aktualizacja ${{ steps.kind.outputs.kind }} $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
-            for i in 1 2 3; do git pull --rebase -q origin main && git push && break; sleep 5; done
+            # Push to the branch the workflow runs on (main on schedule; a feature branch when started by hand).
+            for i in 1 2 3; do git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && break; sleep 5; done
           fi
 
       # The app downloads https://raw.githubusercontent.com/<repo>/data/*.json.

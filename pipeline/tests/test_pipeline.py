@@ -11,7 +11,8 @@ from app.db import connect
 from tests.fake_api import FakeWorld
 
 NOW = datetime(2026, 11, 17, 7, 0, tzinfo=timezone.utc)
-KEYS = {"apisports": "test-key", "odds": "test-odds"}
+KEYS = {"fdo": "test-fdo", "bdl": "test-bdl", "odds": "test-odds"}
+NO_SLEEP = lambda s: None  # noqa: E731
 
 # Required keys per domain.ts interface (subset that the UI dereferences).
 EVENT_KEYS = {"id", "origin", "sport", "league", "home", "away", "kickoff", "status", "venue", "markets", "recommendations", "noBetReason", "formHome", "formAway", "stats", "absences", "lineups", "h2h", "sources", "lastUpdated", "flags"}
@@ -26,7 +27,7 @@ def env(tmp_path, monkeypatch):
     conn = connect(tmp_path / "db.sqlite3")
     world = FakeWorld(now=NOW)
     clock = {"now": NOW}
-    pipe = Pipeline(conn, world, KEYS, clock=lambda: clock["now"])
+    pipe = Pipeline(conn, world, KEYS, clock=lambda: clock["now"], sleep=NO_SLEEP)
     return conn, world, pipe, out, clock
 
 
@@ -38,13 +39,20 @@ def test_morning_run_end_to_end(env):
     conn, world, pipe, out, _ = env
     summary = pipe.run("morning")
 
-    # data stored for both sports, previous season fetched once for model training
+    # football: current season from football-data.org + previous season from the CSV (once), current-season CSV rows merged
     n = {r["league_key"]: r["n"] for r in conn.execute("SELECT league_key, COUNT(*) n FROM events GROUP BY league_key")}
-    assert n["epl"] == 180 and n["nba"] == 320
+    assert n["epl"] == 180 and n["nba"] == 320 and n["uel"] == 2
+    # one team identity across three spellings ('Man United' / 'Manchester United FC' / 'Manchester United')
+    epl_teams = conn.execute("SELECT COUNT(DISTINCT t) n FROM (SELECT home_team_id t FROM events WHERE league_key='epl' UNION SELECT away_team_id FROM events WHERE league_key='epl')").fetchone()["n"]
+    assert epl_teams == 10
+    assert summary["fixtures"]["football-data.org"] == 90 and summary["csv_history"] == 140 and summary["fixtures"]["the-odds-api"] == 2
     # odds names differ between providers ("Tottenham Hotspur" vs "Tottenham") and still match
-    assert summary["odds_matched"]["epl"] >= 3 and summary["odds_matched"]["nba"] >= 1
-    # unknown leagues in the fake are reported, not fatal
-    assert any("ligue" in e or "liga" in e for e in summary["errors"])
+    assert summary["odds_matched"]["epl"] >= 3 and summary["odds_matched"]["nba"] >= 1 and summary["odds_matched"]["uel"] == 2
+    # missing CSV files are reported, not fatal; no unmatched odds in fixture-API leagues
+    assert any("historia laliga" in e for e in summary["errors"])
+    assert not any("bez pary" in e for e in summary["errors"])
+    # balldontlie: 2 seasons x 2 pages
+    assert sum(1 for c in world.calls if "balldontlie" in c) == 4
 
     events = load(out, "events.json")
     assert events and all(EVENT_KEYS <= set(e) for e in events)
@@ -63,9 +71,17 @@ def test_morning_run_end_to_end(env):
         assert e["lineups"]["status"] == "unavailable"
         if e["sport"] == "football":
             assert next(s for s in e["stats"] if s["key"] == "xg")["home"] is None
+    # Europa League: odds shown, priced by the market, never recommended
+    uel = [e for e in events if e["league"]["id"] == "uel"]
+    assert len(uel) == 2 and all(not e["recommendations"] and any("tylko kursy" in f for f in e["flags"]) for e in uel)
+    assert all(m["verdict"].startswith("Brak modelu") for e in uel for m in e["markets"] if m.get("available", True))
+    assert next(s for s in uel[0]["sources"] if s["kind"] == "fixtures")["provider"] == "The Odds API"
+    epl = next(e for e in events if e["league"]["id"] == "epl")
+    assert next(s for s in epl["sources"] if s["kind"] == "fixtures")["provider"] == "football-data.org"
     meta = load(out, "meta.json")
     assert meta["origin"] == "live" and meta["bookmakers"].get("pinnacle") == "Pinnacle"
-    assert {p["id"]: p["status"] for p in meta["providers"]}["the-odds-api"] == "connected"
+    status = {p["id"]: p["status"] for p in meta["providers"]}
+    assert status == {"football-data-org": "connected", "football-data-csv": "connected", "balldontlie": "connected", "the-odds-api": "connected", "pl-books": "unverified"}
 
 
 def test_recommendations_lifecycle_settlement_and_history(env):
@@ -98,6 +114,8 @@ def test_recommendations_lifecycle_settlement_and_history(env):
     assert all(HIST_KEYS <= set(h) for h in hist)
     assert {h["result"] for h in hist} <= {"won", "lost", "void", "pending", "withdrawn"}
     assert len(hist) == conn.execute("SELECT COUNT(*) n FROM recommendations").fetchone()["n"]
+    # Europa League results came from /scores (no tips there, but the games are older than 40 h)
+    assert {r["status"] for r in conn.execute("SELECT status FROM events WHERE league_key = 'uel'")} == {"finished"}
 
 
 def test_odds_budget_skips_leagues_instead_of_overspending(env, monkeypatch):
@@ -116,18 +134,21 @@ def test_missing_keys_still_publishes(tmp_path, monkeypatch):
     out = tmp_path / "data"
     monkeypatch.setattr(cli, "PUBLISH_DIR", out)
     conn = connect(tmp_path / "db.sqlite3")
-    pipe = Pipeline(conn, FakeWorld(now=NOW), {"apisports": None, "odds": None}, clock=lambda: NOW)
+    pipe = Pipeline(conn, FakeWorld(now=NOW), {"fdo": None, "bdl": None, "odds": None}, clock=lambda: NOW, sleep=NO_SLEEP)
     s = pipe.run("morning")
-    assert s["events"] == 0
+    assert s["events"] == 0, "the CSV (no key needed) brings history only"
     meta = load(out, "meta.json")
-    assert all(p["status"] in ("not_configured", "unverified") for p in meta["providers"])
+    status = {p["id"]: p["status"] for p in meta["providers"]}
+    assert status.pop("football-data-csv") == "connected"
+    assert all(v in ("not_configured", "unverified") for v in status.values())
 
 
 def test_invalid_key_is_reported(tmp_path, monkeypatch):
     monkeypatch.setattr(cli, "PUBLISH_DIR", tmp_path / "data")
     conn = connect(tmp_path / "db.sqlite3")
-    pipe = Pipeline(conn, FakeWorld(now=NOW), {"apisports": "wrong", "odds": "wrong"}, clock=lambda: NOW)
+    pipe = Pipeline(conn, FakeWorld(now=NOW), {"fdo": "wrong", "bdl": "wrong", "odds": "wrong"}, clock=lambda: NOW, sleep=NO_SLEEP)
     s = pipe.run("morning")
-    assert any("Missing application key" in e or "token" in e for e in s["errors"])
+    assert any("terminarz epl" in e and "403" in e for e in s["errors"])
     meta = load(tmp_path / "data", "meta.json")
-    assert {p["id"]: p["status"] for p in meta["providers"]}["api-football"] == "error"
+    status = {p["id"]: p["status"] for p in meta["providers"]}
+    assert status["football-data-org"] == status["balldontlie"] == status["the-odds-api"] == "error"
