@@ -23,7 +23,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Callable
 
-from . import analysis, ingest, params, publish, teams
+from . import analysis, ingest, insight, params, publish, teams
 from .config import (
     BDL_DAILY_LIMIT,
     CSV_DAILY_LIMIT,
@@ -189,8 +189,14 @@ class Pipeline:
         models = analysis.fit_models(self.conn, now, league_params)
         stats = {"new": 0, "updated": 0, "withdrawn": 0}
         analyses = []
+        buckets = insight.load_buckets()
         for ev in analysis.upcoming_events(self.conn, now):
             a = analysis.analyse_event(self.conn, ev, models.get(ev["league_key"]), now, league_params.get(ev["league_key"]))
+            try:
+                a.insight = insight.build(self.conn, a, models.get(ev["league_key"]), buckets)
+            except Exception as e:  # noqa: BLE001 - an insight must never block publishing
+                log.exception("insight failed for %s", ev["id"])
+                self.errors.append(f"uwaga (analiza kursu {ev['id']}): {type(e).__name__}: {e}")
             for k, v in analysis.sync_recommendations(self.conn, a, now).items():
                 stats[k] += v
             analyses.append(a)

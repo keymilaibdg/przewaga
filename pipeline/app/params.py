@@ -44,6 +44,7 @@ class LeagueParams:
     min_quality: int = MIN_QUALITY
     max_disagreement: float = MAX_DISAGREEMENT
     xi: float | None = None  # time decay of the model; None = model default
+    fatigue: bool = False  # basketball: schedule features (rest, back-to-back, travel) in the model
     markets: dict[str, MarketParams] = field(default_factory=dict)
     calibrated_at: str | None = None
 
@@ -87,6 +88,7 @@ def _from_json(key: str, d: dict[str, Any], calibrated_at: str | None) -> League
         min_quality=int(d.get("min_quality", MIN_QUALITY)),
         max_disagreement=float(d.get("max_disagreement", MAX_DISAGREEMENT)),
         xi=d.get("xi"),
+        fatigue=bool(d.get("fatigue", False)),
         markets=markets,
         calibrated_at=calibrated_at,
     )

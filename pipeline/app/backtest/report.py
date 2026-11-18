@@ -76,6 +76,15 @@ def markdown(res: dict, calib: dict) -> str:
         a(_market_table(nba["markets"]))
         a(_sim_line("Strojenie", nba["sim_tune"]))
         a(_sim_line("Test", nba["sim_hold"]))
+        fat = nba.get("fatigue")
+        if fat:
+            c = fat.get("coefficients") or {}
+            a("")
+            a(f"Zmęczenie i terminarz (dni odpoczynku, back-to-back, podróż): **{'używane w modelu' if fat['used'] else 'nie poprawiły modelu — wyłączone'}**. "
+              f"Log-loss surowego modelu na strojeniu bez / z: 1X2 {num(fat['tune_logloss']['bez'].get('h2h'), 5)} / {num(fat['tune_logloss']['z'].get('h2h'), 5)}, "
+              f"handicap {num(fat['tune_logloss']['bez'].get('spreads'), 5)} / {num(fat['tune_logloss']['z'].get('spreads'), 5)}. "
+              f"Efekty (punkty różnicy dla gospodarza): dzień odpoczynku więcej {num(c.get('rest_diff'), 2)}, gospodarz b2b {num(c.get('b2b_home'), 2)}, gość b2b {num(c.get('b2b_away'), 2)}, "
+              f"1000 km podróży gościa więcej {num(c.get('travel_1000km'), 2)}.")
         sc = nba.get("sigma_check")
         if sc:
             a("")
@@ -102,6 +111,26 @@ def markdown(res: dict, calib: dict) -> str:
         a("")
         a("Darmowe źródła nie mają historii kursów pucharowych, więc przewagi nad rynkiem nie da się jeszcze sprawdzić: model jest pokazywany w aplikacji, typy pozostają wyłączone, a kursy zbierane codziennie posłużą do walidacji.")
     a("")
+    a("## Niskie kursy: czy to pułapka?")
+    a("")
+    a("Wszystkie mecze z kursami (bez modelu). Kurs średni rynku przed meczem; „wygrane” = jak często selekcja w tym przedziale kursu faktycznie wygrała; "
+      "zwrot = wynik obstawiania każdej takiej selekcji po 1 zł.")
+    a("")
+    pb = dict(res.get("football", {}).get("price_buckets") or {})
+    if res.get("nba", {}).get("price_buckets"):
+        pb["nba"] = res["nba"]["price_buckets"]
+    for lg, d in pb.items():
+        rows = [b for b in d["buckets"] if b["to"] <= 1.8]
+        if not rows:
+            continue
+        a(f"**{name(lg)}** ({d['matches']} meczów, {d['source']}):")
+        a("")
+        a("| Kurs | Liczba | Wygrane (95% przedział) | Zakładał kurs | Zwrot przy kursie średnim | przy najlepszym | po podatku 12% |")
+        a("|---|---|---|---|---|---|---|")
+        for b in rows:
+            a(f"| {num(b['from'], 2)}–{num(b['to'], 2)} | {b['n']} | {pct(b['winRate'], 1, False)} ({pct(b['winRateLow'], 0, False)}–{pct(b['winRateHigh'], 0, False)}) | "
+              f"{pct(b['implied'], 1, False)} | {pct(b['roiAvg'])} | {pct(b['roiBest'])} | {pct(b['roiTaxed'])} |")
+        a("")
     a("## Ograniczenia")
     a("")
     a("- Kurs „najlepszy rynku” z plików to maksimum z kilkudziesięciu bukmacherów — w praktyce trudniej osiągalny niż średnia; dlatego raport podaje też ROI przy kursach średnich i po podatku 12%.")

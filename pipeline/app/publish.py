@@ -262,6 +262,7 @@ def event_json(conn: sqlite3.Connection, ea: EventAnalysis, now: datetime) -> di
         "sources": sources,
         "lastUpdated": max(filter(None, [ev["updated_at"], iso(ea.odds_updated) if ea.odds_updated else None])),
         "flags": flags,
+        "priceInsight": ea.insight,
     }
 
 

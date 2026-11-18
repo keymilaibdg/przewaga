@@ -104,6 +104,7 @@ def archive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(R, "OUT_DIR", tmp_path / "out")
     monkeypatch.setattr(R, "REPORT", tmp_path / "BACKTEST.md")
     monkeypatch.setattr(R, "CALIBRATION_PATH", tmp_path / "calibration.json")
+    monkeypatch.setattr(R, "PRICE_BUCKETS_PATH", tmp_path / "price_buckets.json")
     monkeypatch.setattr(cm, "RATINGS_PATH", tmp_path / "cup_ratings.json")
     monkeypatch.setattr(R, "open_db", lambda: None)
     return tmp_path

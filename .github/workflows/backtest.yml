@@ -15,7 +15,7 @@ on:
         options: [run, ratings]
         default: run
   push:
-    branches: [etap-5]
+    branches: [analiza-kursu]
     paths:
       - "pipeline/app/backtest/**"
       - ".github/workflows/backtest.yml"
@@ -76,7 +76,7 @@ jobs:
         run: |
           git config user.name "przewaga-bot"
           git config user.email "przewaga-bot@users.noreply.github.com"
-          for f in pipeline/app/calibration.json pipeline/app/cup_ratings.json pipeline/backtest/results.json pipeline/backtest/backtest.json pipeline/backtest/data docs/BACKTEST.md; do
+          for f in pipeline/app/calibration.json pipeline/app/cup_ratings.json pipeline/app/price_buckets.json pipeline/backtest/results.json pipeline/backtest/backtest.json pipeline/backtest/data docs/BACKTEST.md; do
             if [ -e "$f" ]; then git add -f "$f"; fi
           done
           if ! git diff --cached --quiet; then
