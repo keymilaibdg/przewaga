@@ -15,6 +15,8 @@ import { fmtAgo, fmtKickoff, fmtLongDay, fmtPct, fmtPrice, fmtTime, plural } fro
 import { navigate } from "../router";
 import { bookmakerName } from "../lib/bookmakers";
 import { cn } from "../lib/cn";
+import { AppPicksCard } from "../components/match/AppPicks";
+import { appPicks } from "../lib/picks";
 
 export function DashboardPage() {
   const { settings, refresh } = useData();
@@ -30,6 +32,7 @@ export function DashboardPage() {
   const featured = todayTips[0] ?? null;
   const rest = tips.filter((t) => t !== featured).slice(0, 3);
   const upcoming = useMemo(() => (events.data ?? []).slice(0, 8), [events.data]);
+  const picks = useMemo(() => (events.data ? appPicks(events.data, { sports: settings.sports, stakeTax: settings.stakeTax, limit: 5, withinHours: 36 }) : []), [events.data, settings]);
   const unread = seen ? 0 : (notifications.data ?? []).filter((n) => !n.read).length;
   const s = summary.data;
 
@@ -96,6 +99,13 @@ export function DashboardPage() {
           </Card>
         )}
       </section>
+
+      {/* App picks (one per match) for building a coupon */}
+      {picks.length > 0 && (
+        <section className="mt-7">
+          <AppPicksCard picks={picks} title="Typy aplikacji na dziś i jutro" subtitle="Po jednym typie na mecz — szybko zbudujesz z nich kupon" />
+        </section>
+      )}
 
       {/* Top tips */}
       <section className="mt-7">
