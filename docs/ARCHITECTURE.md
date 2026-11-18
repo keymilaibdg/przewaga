@@ -20,7 +20,7 @@ Status dokumentu: wersja 3 (2026-11-17, wariant bezkosztowy, aplikacja APK). Wsz
 | Klucze API | GitHub Secrets | Nie trafiają do aplikacji ani do kodu (repozytorium jest publiczne, sekrety są szyfrowane). |
 | Podpis APK | Stały klucz w GitHub Secrets (`ANDROID_KEYSTORE_B64`) | Aktualizacje instalują się na poprzednią wersję. Bez klucza powstaje APK debug. |
 | Modele | NumPy / SciPy w zadaniu Pythona | Bez zmian względem planu. |
-| Powiadomienia | ETAP 6: powiadomienia lokalne w APK po pobraniu nowych analiz | Bez serwera i bez płatnych usług push. |
+| Powiadomienia | Powiadomienia lokalne w APK (ETAP 6): `@capacitor/background-runner` co ~2 h pobiera `meta.json` i pokazuje nowe powiadomienia; `@capacitor/local-notifications` przypomina godzinę przed meczem z kuponu | Bez serwera i bez płatnych usług push. Android może opóźniać zadania w tle (oszczędzanie baterii). |
 | Dostęp | Bez logowania: aplikacja i typy są wspólne dla każdego, kto ma APK; ustawienia trzymane lokalnie na telefonie | Konsekwencja publicznego repozytorium. Logowanie z briefu jest świadomie pominięte (brak serwera). |
 
 ### 1a. Konsekwencje wariantu darmowego
@@ -143,6 +143,8 @@ składowe: wielkość przewagi względem niepewności (edge / szerokość przedz
 ## 7. Kupony (ETAP 6)
 
 Prawdopodobieństwo kuponu liczone jako iloczyn tylko dla zdarzeń niezależnych (różne mecze, brak wspólnych czynników). Rynki z tego samego meczu są blokowane (korelacja). UI nie sugeruje, że akumulator jest bezpieczniejszy — pokazuje, że łączna marża rośnie z każdym zdarzeniem.
+
+Realizacja: `frontend/src/lib/coupon.ts` (matematyka + testy), `api/CouponContext.tsx` (stan w pamięci telefonu, aktualizacja kursów po każdym pobraniu danych), `components/coupon/Coupon.tsx`. Kupon pokazuje kurs łączny, szansę wygranej („1 na N”), kurs godziwy, EV z podatkiem 12% i bez, marżę kuponu na tle średniej marży zdarzenia, wypłatę po podatku; stawka ograniczona dziennym limitem z Profilu. Druga selekcja z tego samego meczu zastępuje pierwszą (z komunikatem). Kupon jest kalkulatorem — nic nie trafia do bukmachera.
 
 ## 8. Bezpieczeństwo
 
