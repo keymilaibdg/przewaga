@@ -7,6 +7,8 @@ import { TipCard } from "../components/match/TipCard";
 import { NO_BET_MESSAGE } from "../demo/generate";
 import { topTips } from "../lib/selectors";
 import type { RiskLevel, Sport } from "../types/domain";
+import { AppPicksCard } from "../components/match/AppPicks";
+import { appPicks } from "../lib/picks";
 
 type SortKey = "quality" | "ev" | "prob" | "ratio";
 
@@ -38,11 +40,16 @@ export function TipsPage() {
     return [...tips].sort((a, b) => key(b) - key(a)).slice(0, 10);
   }, [events.data, settings, sport, risks, sort]);
 
+  const picks = useMemo(
+    () => (events.data ? appPicks(events.data, { sports: sport === "all" ? settings.sports : [sport], stakeTax: settings.stakeTax, limit: 15 }) : []),
+    [events.data, settings, sport],
+  );
+
   const toggleRisk = (r: RiskLevel) => setRisks((rs) => (rs.includes(r) ? rs.filter((x) => x !== r) : [...rs, r]));
 
   return (
     <div className="animate-fade-up">
-      <PageHeader title="Najlepsze typy" subtitle="Maks. 10 rekomendacji z dodatnim EV · najbliższe 7 dni" />
+      <PageHeader title="Typy" subtitle="Okazje z dodatnim EV i typy aplikacji do kuponu · najbliższe 7 dni" />
 
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
         <FilterChip active={sport === "all"} onClick={() => setSport("all")}>Wszystkie</FilterChip>
@@ -84,9 +91,13 @@ export function TipsPage() {
           list.map((t, i) => <TipCard key={t.rec.id} event={t.event} rec={t.rec} rank={i + 1} defaultOpen={i === 0} className="animate-fade-up" />)
         ) : (
           <Card>
-            <EmptyState icon={<LuCircleSlash className="size-5" />} title={NO_BET_MESSAGE} body="Zmień filtry lub progi w Profilu. Aplikacja nie zapełnia listy na siłę." />
+            <EmptyState icon={<LuCircleSlash className="size-5" />} title={NO_BET_MESSAGE} body="Typy z przewagą (modelu lub okazje rynkowe) pojawiają się tylko, gdy są. Poniżej typy aplikacji do kuponu — bez przewagi, z uczciwą informacją o ryzyku." />
           </Card>
         )}
+      </div>
+
+      <div className="mt-6">
+        <AppPicksCard picks={picks} title="Typy aplikacji (do kuponu)" subtitle="Po jednym typie na mecz z najbliższych 7 dni: okazje najpierw, potem najbardziej prawdopodobne wyniki" />
       </div>
       <ResponsibleNote className="mt-8" />
     </div>

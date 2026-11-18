@@ -14,6 +14,8 @@ interface CouponValue {
   /** Adds the selection, or removes it when already on the coupon. Returns a message for the user, if any. */
   toggle: (event: SportEvent, sel: SelectionAnalysis) => string | null;
   remove: (selectionId: string) => void;
+  /** Adds several selections at once (one per match); returns how many were added. */
+  addMany: (items: { event: SportEvent; sel: SelectionAnalysis }[]) => number;
   clear: () => void;
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -114,6 +116,21 @@ export function CouponProvider({ children }: { children: ReactNode }) {
         }
       },
       remove: (id) => update(removeLeg(legs, id)),
+      addMany: (items) => {
+        let next = legs;
+        let added = 0;
+        for (const { event, sel } of items) {
+          if (next.some((l) => l.selectionId === sel.id) || Date.parse(event.kickoff) <= Date.now() || !bestQuote(sel.quotes)) continue;
+          try {
+            next = addLeg(next, legFrom(event, sel)).legs;
+            added += 1;
+          } catch {
+            break; // coupon full
+          }
+        }
+        if (added) update(next);
+        return added;
+      },
       clear: () => update([]),
       open,
       setOpen,
