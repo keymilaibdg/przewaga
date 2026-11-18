@@ -25,6 +25,7 @@ for i in range(40):
         with pdfplumber.open(io.BytesIO(body)) as pdf:
             for p in pdf.pages[:3]:
                 pages.append({"width": p.width, "words": [{"text": w["text"], "x0": round(w["x0"], 1), "x1": round(w["x1"], 1), "top": round(w["top"], 1)} for w in p.extract_words(keep_blank_chars=False)]})
+        import os; os.makedirs("pipeline/tests/data", exist_ok=True)
         json.dump({"stamp": stamp, "pages": pages}, open("pipeline/tests/data/nba_injury_words.json", "w"), indent=0)
         break
     t -= timedelta(minutes=15)
