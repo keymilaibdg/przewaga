@@ -138,6 +138,11 @@ składowe: wielkość przewagi względem niepewności (edge / szerokość przedz
 - Harmonogram: pełny backtest 1. dnia miesiąca, ratingi pucharowe w poniedziałki (workflow „Backtest i kalibracja”).
 - Stan z 18.11.2026: na wszystkich rynkach optymalna waga modelu wyniosła 0 — rynek bez marży prognozuje lepiej niż model oparty tylko na wynikach. Typy są wyłączone, aplikacja pokazuje prognozę rynku i surowy model osobno.
 
+**Analiza kursu (2026-11-18, `app/insight.py`, karta „Analiza kursu” w analizie meczu)**
+- Dla każdej selekcji 1X2 / moneyline z kursami: skąd kurs (najlepszy / najgorszy / mediana, liczba bukmacherów, szansa w kursie vs rynek bez marży, marża, ruch kursu), czynniki obu drużyn (siła z całego okresu wg modelu i miejsce, forma 5 meczów, siła rywali w tych meczach, bilans i porażki na styk, bilans u siebie / na wyjeździe, przewaga gospodarza, H2H, zmęczenie i terminarz), opłacalność (wynik na 100 zł po podatku, próg opłacalności, minimalny kurs w Polsce), ryzyko (szansa przegranej, wahania, serie 10 i 50 zakładów — dokładnie z rozkładu dwumianowego, kupon z 3 takich zdarzeń) i werdykt.
+- Historia podobnych kursów: `app/price_buckets.json` z backtestu — dla każdej ligi i przedziału kursu (1,01–1,15 … 6+): liczba selekcji, skuteczność z 95% przedziałem Wilsona, szansa w kursie i bez marży, zwrot przy kursie średnim, najlepszym i po podatku 12%. Ocena „pułapki” porównuje skuteczność z rynkiem bez marży (istotna tylko, gdy cały przedział ufności leży poniżej).
+- NBA: zmęczenie i terminarz (`models/schedule.py`): dni przerwy, back-to-back, podróż między halami, mecze w 7 dni — liczone wyłącznie z wcześniejszych meczów. W modelu tylko, gdy backtest pokaże poprawę (`fatigue` w calibration.json); w analizie kursu pokazywane zawsze.
+
 **Reguły twarde:** EV ≤ 0 → nigdy nie rekomenduj. Brak danych nie jest sygnałem pozytywnym — obniża ocenę. Brak wartościowych rynków → komunikat „Brak zakładów spełniających obecnie kryteria jakości…”.
 
 ## 7. Kupony (ETAP 6)

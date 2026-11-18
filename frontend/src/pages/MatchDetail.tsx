@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { LuCircleSlash, LuClock, LuDatabase, LuTriangleAlert, LuCircleMinus, LuUserX, LuChevronDown, LuPlus, LuCheck } from "react-icons/lu";
 import { useCoupon } from "../api/CouponContext";
+import { PriceInsightCard } from "../components/match/PriceInsight";
 import { useData, useQuery } from "../api/DataContext";
 import { PageHeader, ResponsibleNote } from "../components/layout/AppShell";
 import { Badge, Card, DemoBadge, EmptyState, KeyValue, Skeleton } from "../components/ui/primitives";
@@ -145,6 +146,8 @@ function AnalysisTab({ e, recs, withdrawn }: { e: SportEvent; recs: Recommendati
   return (
     <>
       {best ? <BestBet rec={best} /> : <NoBetCard e={e} />}
+
+      {e.priceInsight && <PriceInsightCard e={e} insight={e.priceInsight} />}
 
       {recs.slice(1).map((r) => (
         <Card key={r.id} className="p-4">

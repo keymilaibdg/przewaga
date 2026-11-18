@@ -11,6 +11,7 @@ from .db import dumps
 from .engine.evaluate import Candidate, Context, Market, Quote, Selection, fmt_pct, price_market
 from .engine.odds import closing_line_value
 from .models.basketball import Game, Ratings
+from .models.schedule import GameCtx, contexts
 from .models.football import DixonColes, Match, outcome_probs, total_over
 from .providers.http import iso
 
@@ -52,7 +53,7 @@ def fit_models(conn: sqlite3.Connection, now: datetime, params: dict[str, League
         cur = season_for(lg.sport, now)
         seasons = (cur, previous_season(lg.sport, cur))
         rows = conn.execute(
-            f"""SELECT home_team_id, away_team_id, home_score, away_score, kickoff FROM events
+            f"""SELECT id, home_team_id, away_team_id, home_score, away_score, kickoff FROM events
                 WHERE league_key = ? AND season IN (?, ?) AND status = 'finished'
                 AND home_score IS NOT NULL AND away_score IS NOT NULL AND kickoff < ?""",
             (key, *seasons, iso(now)),
@@ -64,8 +65,21 @@ def fit_models(conn: sqlite3.Connection, now: datetime, params: dict[str, League
         if lg.sport == "football":
             models[key] = DixonColes.fit([Match(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows], **xi)
         else:
-            models[key] = Ratings.fit([Game(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows], **xi)
+            ctx = schedule_contexts(conn, key) if pp.fatigue else {}
+            models[key] = Ratings.fit(
+                [Game(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r), ctx.get(r["id"])) for r in rows], fatigue=pp.fatigue, **xi
+            )
     return models
+
+
+def schedule_contexts(conn: sqlite3.Connection, league_key: str) -> dict[str, GameCtx]:
+    """Rest / back-to-back / travel for every game of a basketball league (finished and scheduled)."""
+    rows = conn.execute(
+        """SELECT e.id, e.kickoff, e.home_team_id, e.away_team_id, h.name AS hn FROM events e JOIN teams h ON h.id = e.home_team_id
+           WHERE e.league_key = ? AND e.status IN ('finished', 'scheduled', 'live')""",
+        (league_key,),
+    ).fetchall()
+    return contexts([(r["id"], parse(r["kickoff"]), r["home_team_id"], r["away_team_id"], r["hn"]) for r in rows])
 
 
 # ---------------- odds loading ----------------
@@ -103,6 +117,8 @@ class EventAnalysis:
     known: bool = False
     market_only: bool = False  # no model for this competition: odds are shown, nothing is recommended
     params: LeagueParams | None = None
+    schedule: GameCtx | None = None  # basketball: rest / back-to-back / travel of both teams
+    insight: dict | None = None  # price insight (app/insight.py), published as event.priceInsight
 
 
 MARKET_ONLY_VERDICT = "Brak modelu dla tych rozgrywek — pokazujemy tylko kursy rynku (prawdopodobieństwo = rynek bez marży)."
@@ -111,6 +127,8 @@ MARKET_ONLY_VERDICT = "Brak modelu dla tych rozgrywek — pokazujemy tylko kursy
 def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes | Ratings | None, now: datetime, params: LeagueParams | None = None) -> EventAnalysis:
     pp = params or default_params(ev["league_key"])
     a = EventAnalysis(event=ev, params=pp)
+    if ev["sport"] == "basketball" and ev["league_key"] == "nba":
+        a.schedule = schedule_contexts(conn, ev["league_key"]).get(ev["id"])
     h, w = ev["home_team_id"], ev["away_team_id"]
     hn, an = ev["home_name"], ev["away_name"]
     quotes, history = latest_quotes(conn, ev["id"])
@@ -148,15 +166,16 @@ def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes |
             a.markets.append(Market("totals", f"Gole: powyżej/poniżej {fmt_line(line)}", line, [sel("over", f"Powyżej {fmt_line(line)} gola", line, p, "totals"), sel("under", f"Poniżej {fmt_line(line)} gola", line, 1 - p, "totals")]))
     else:
         assert isinstance(model, Ratings)
-        a.margin_total = model.predict(h, w)
+        c = a.schedule
+        a.margin_total = model.predict(h, w, c)
         hw = lambda p: model.half_width(p, h, w)  # noqa: E731
-        p = model.p_home_win(h, w)
+        p = model.p_home_win(h, w, c)
         a.markets.append(Market("h2h", "Moneyline", None, [sel("home", f"Wygrana {hn}", None, p, "h2h"), sel("away", f"Wygrana {an}", None, 1 - p, "h2h")]))
         for line in sorted({k[2] for k in quotes if k[0] == "spreads" and k[1] == "home" and k[2] is not None}):
-            pc = model.p_home_cover(h, w, line)
+            pc = model.p_home_cover(h, w, line, c)
             a.markets.append(Market("spreads", f"Handicap {signed(line)}", line, [sel("home", f"{hn} {signed(line)}", line, pc, "spreads"), Selection("away", f"{an} {signed(-line)}", -line, quotes.get(("spreads", "away", -line), []), 1 - pc, history=history.get(("spreads", "away", -line), []))]))
         for line in sorted({k[2] for k in quotes if k[0] == "totals" and k[2] is not None}):
-            po = model.p_over(h, w, line)
+            po = model.p_over(h, w, line, c)
             a.markets.append(Market("totals", f"Punkty: powyżej/poniżej {fmt_line(line)}", line, [sel("over", f"Powyżej {fmt_line(line)} pkt", line, po, "totals"), sel("under", f"Poniżej {fmt_line(line)} pkt", line, 1 - po, "totals")]))
 
     for mk in a.markets:

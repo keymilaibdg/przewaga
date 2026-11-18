@@ -191,6 +191,75 @@ export interface SportEvent {
   sources: SourceStatus[];
   lastUpdated: string;
   flags: string[];
+  /** Where the 1X2 / moneyline prices come from, whether they are worth taking, risk (pipeline >= analiza-kursu). */
+  priceInsight?: PriceInsight | null;
+}
+
+export interface InsightFactor {
+  key: string;
+  title: string;
+  home: string;
+  away: string;
+  favours: "home" | "away" | "none";
+  note: string;
+}
+
+export interface PriceBucketStats {
+  from: number;
+  to: number;
+  n: number;
+  wins: number;
+  winRate: number;
+  winRateLow: number;
+  winRateHigh: number;
+  avgPrice: number;
+  implied: number;
+  fair: number;
+  roiAvg: number;
+  roiBest: number;
+  roiTaxed: number;
+  league: string;
+  matches: number | null;
+  source: string | null;
+}
+
+export interface SelectionInsight {
+  selectionId: string;
+  label: string;
+  key: string;
+  price: number;
+  bookmaker: string;
+  worstPrice: number;
+  medianPrice: number;
+  books: number;
+  implied: number;
+  fairProb: number;
+  finalProb: number;
+  rawModelProb: number;
+  marketMargin: number | null;
+  marginInPrice: number;
+  ev: number;
+  evTaxed: number;
+  breakEven: number;
+  breakEvenTaxed: number;
+  minPriceTaxed: number | null;
+  loseProb: number;
+  oneInN: number | null;
+  per100: { expected: number; win: number; lose: number; sd: number };
+  series: { n10AllWin: number; n10ExpectedLosses: number; n10InLoss: number; n50InLoss: number };
+  acca: { legs: number; price: number; prob: number; evTaxed: number };
+  movement: { first: number; last: number; changePct: number; since: string } | null;
+  history: PriceBucketStats | null;
+  canRecommend: boolean;
+  verdict: { level: "value" | "neutral" | "avoid"; headline: string; points: string[] };
+}
+
+export interface PriceInsight {
+  favouriteSelectionId: string;
+  why: string;
+  factors: InsightFactor[];
+  selections: SelectionInsight[];
+  modelNote: string;
 }
 
 /** "withdrawn" = recommendation withdrawn before kick-off: kept in history, excluded from performance. */
