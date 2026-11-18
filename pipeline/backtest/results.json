@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-18T09:49:33Z",
+ "generated_at": "2026-11-18T09:54:28Z",
  "football": {
   "xi_grid": {
    "0.001": 1.01023,
@@ -2230,55 +2230,55 @@
  },
  "cups": {
   "cup_matches": 2639,
-  "teams": 682,
+  "teams": 673,
   "domestic_matches": 26504,
   "skipped": [],
   "validation": {
    "season": "2024/25 (wszystkie fazy, model z danych sprzed 1.07.2024)",
-   "matches": 431,
-   "logloss_model": 0.9994,
-   "logloss_baseline": 1.0324,
+   "matches": 461,
+   "logloss_model": 0.9921,
+   "logloss_baseline": 1.035,
    "baseline": "częstości 1/X/2 z meczów pucharowych 2022-2024",
    "calibration": [
     {
-     "predicted": 0.065,
-     "observed": 0.043,
-     "count": 47
+     "predicted": 0.067,
+     "observed": 0.038,
+     "count": 52
     },
     {
-     "predicted": 0.163,
-     "observed": 0.22,
-     "count": 186
+     "predicted": 0.164,
+     "observed": 0.205,
+     "count": 205
     },
     {
-     "predicted": 0.246,
-     "observed": 0.241,
-     "count": 485
+     "predicted": 0.247,
+     "observed": 0.245,
+     "count": 511
     },
     {
-     "predicted": 0.345,
-     "observed": 0.347,
-     "count": 190
+     "predicted": 0.343,
+     "observed": 0.337,
+     "count": 199
     },
     {
-     "predicted": 0.446,
+     "predicted": 0.444,
      "observed": 0.5,
-     "count": 162
+     "count": 172
     },
     {
-     "predicted": 0.55,
-     "observed": 0.418,
-     "count": 110
+     "predicted": 0.547,
+     "observed": 0.441,
+     "count": 118
     },
     {
-     "predicted": 0.644,
-     "observed": 0.635,
-     "count": 63
+     "predicted": 0.642,
+     "observed": 0.62,
+     "count": 71
     },
     {
-     "predicted": 0.746,
-     "observed": 0.706,
-     "count": 34
+     "predicted": 0.749,
+     "observed": 0.744,
+     "count": 39
     }
    ]
   }

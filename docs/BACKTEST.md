@@ -1,6 +1,6 @@
 # Backtest walk-forward i kalibracja (ETAP 5)
 
-Wygenerowano automatycznie: 2026-11-18T09:49:33Z (`python -m app.backtest run`, workflow „Backtest i kalibracja”). Nie edytować ręcznie.
+Wygenerowano automatycznie: 2026-11-18T09:54:28Z (`python -m app.backtest run`, workflow „Backtest i kalibracja”). Nie edytować ręcznie.
 
 ## Werdykt
 
@@ -11,8 +11,8 @@ Wygenerowano automatycznie: 2026-11-18T09:49:33Z (`python -m app.backtest run`, 
 | Bundesliga | ⏳ w walidacji — typy wyłączone | h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; totals: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej |
 | Ekstraklasa | ⏳ w walidacji — typy wyłączone | h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej |
 | NBA | ⏳ w walidacji — typy wyłączone | h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; spreads: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; totals: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej |
-| Liga Mistrzów | ⏳ w walidacji — typy wyłączone | ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco |
-| Liga Europy | ⏳ w walidacji — typy wyłączone | ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco |
+| Liga Mistrzów | ⏳ w walidacji — typy wyłączone | ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco |
+| Liga Europy | ⏳ w walidacji — typy wyłączone | ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco |
 | Euroliga | — tylko kursy rynku | brak darmowego źródła wyników Euroligi do modelu |
 
 ## Metoda
@@ -92,20 +92,20 @@ Kontrola rozkładu (test): w ±1σ różnicy punktów 69%, sumy 69% (oczekiwane 
 
 ## Puchary (Liga Mistrzów, Liga Europy): ratingi międzyligowe
 
-Model łączny: 26504 meczów ligowych z 21 lig krajowych (football-data.co.uk) + 2639 meczów pucharowych (API-Football 2022–2024 i bieżący sezon z bazy), 682 drużyn.
+Model łączny: 26504 meczów ligowych z 21 lig krajowych (football-data.co.uk) + 2639 meczów pucharowych (API-Football 2022–2024 i bieżący sezon z bazy), 673 drużyn.
 
-Test: 2024/25 (wszystkie fazy, model z danych sprzed 1.07.2024), 431 meczów z drużynami o wystarczającej historii. Log-loss 1X2: model **0,9994**, punkt odniesienia (częstości 1/X/2 z meczów pucharowych 2022-2024) 1,0324.
+Test: 2024/25 (wszystkie fazy, model z danych sprzed 1.07.2024), 461 meczów z drużynami o wystarczającej historii. Log-loss 1X2: model **0,9921**, punkt odniesienia (częstości 1/X/2 z meczów pucharowych 2022-2024) 1,0350.
 
 | Prognoza (średnio) | Wynik (częstość) | Liczba |
 |---|---|---|
-| 6% | 4% | 47 |
-| 16% | 22% | 186 |
-| 25% | 24% | 485 |
-| 34% | 35% | 190 |
-| 45% | 50% | 162 |
-| 55% | 42% | 110 |
-| 64% | 64% | 63 |
-| 75% | 71% | 34 |
+| 7% | 4% | 52 |
+| 16% | 20% | 205 |
+| 25% | 24% | 511 |
+| 34% | 34% | 199 |
+| 44% | 50% | 172 |
+| 55% | 44% | 118 |
+| 64% | 62% | 71 |
+| 75% | 74% | 39 |
 
 Darmowe źródła nie mają historii kursów pucharowych, więc przewagi nad rynkiem nie da się jeszcze sprawdzić: model jest pokazywany w aplikacji, typy pozostają wyłączone, a kursy zbierane codziennie posłużą do walidacji.
 

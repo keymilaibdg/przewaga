@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-18T09:49:33Z",
+  "generated_at": "2026-11-18T09:54:28Z",
   "source": "python -m app.backtest run",
   "leagues": {
     "epl": {
@@ -114,37 +114,37 @@
     },
     "ucl": {
       "status": "validating",
-      "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco",
+      "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco",
       "markets": {
         "h2h": {
-          "model_weight": 0.5,
+          "model_weight": 0.0,
           "hw_scale": 1.0,
           "status": "validating",
-          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco"
         },
         "totals": {
-          "model_weight": 0.5,
+          "model_weight": 0.0,
           "hw_scale": 1.0,
           "status": "validating",
-          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco"
         }
       }
     },
     "uel": {
       "status": "validating",
-      "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco",
+      "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco",
       "markets": {
         "h2h": {
-          "model_weight": 0.5,
+          "model_weight": 0.0,
           "hw_scale": 1.0,
           "status": "validating",
-          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco"
         },
         "totals": {
-          "model_weight": 0.5,
+          "model_weight": 0.0,
           "hw_scale": 1.0,
           "status": "validating",
-          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco"
         }
       }
     },
