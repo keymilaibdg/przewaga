@@ -59,6 +59,7 @@ Wyślij mu link `github.com/TWOJA-NAZWA/przewaga/releases/latest` (np. Messenger
 ## Jak to działa na co dzień
 - **07:17** (i opcjonalnie **15:47**, jeśli pozwala limit kursów) GitHub sam pobiera dane, liczy modele i publikuje analizy. Aplikacja pobiera je przy otwarciu.
 - Bez internetu aplikacja pokazuje ostatnie pobrane dane z oznaczeniem „Offline”.
+- **Backtest i kalibracja** (workflow „Backtest i kalibracja”): 1. dnia miesiąca GitHub sam sprawdza model na historii i ustala, w których ligach wolno mu dawać typy; w poniedziałki odświeża ratingi drużyn pucharowych. Wynik: **Statystyki → Backtest** w aplikacji i plik `docs/BACKTEST.md`. Nic nie trzeba klikać.
 - Nowa wersja aplikacji: w **Profilu** pojawi się „Pobierz aktualizację”. Instaluje się na poprzednią wersję i zachowuje ustawienia.
 
 ## Gdy coś nie działa

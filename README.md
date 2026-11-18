@@ -57,4 +57,9 @@ pip install -r requirements.txt
 python -m pytest                      # testy offline (symulowane API)
 FOOTBALL_DATA_KEY=... BALLDONTLIE_KEY=... ODDS_API_KEY=... python -m app.cli run --kind morning
 python -m app.cli status              # pozostałe limity zapytań
+APISPORTS_KEY=... python -m app.backtest run   # ETAP 5: backtest walk-forward + calibration.json + docs/BACKTEST.md
+python -m app.backtest ratings                 # tylko ratingi pucharowe (app/cup_ratings.json)
 ```
+
+Parametry modelu per liga (waga model/rynek, progi, czy wolno dawać typy) pochodzą z `pipeline/app/calibration.json`,
+który generuje backtest. Wyniki i reguła walidacji: [docs/BACKTEST.md](docs/BACKTEST.md).
