@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Any
 
 from .analysis import EventAnalysis, clv, parse, team_form
-from .config import LEAGUE_BY_KEY, MAX_ODDS_AGE_H
+from .config import LEAGUE_BY_KEY, LEAGUES, MAX_ODDS_AGE_H
 from .engine.evaluate import Market
+from .params import STATUS_LABEL, LeagueParams, default_params
 from .providers.http import iso
 
 NO_BET = "Brak zakładów spełniających obecnie kryteria jakości. Nie rekomendujemy obstawiania tego wydarzenia."
@@ -208,10 +209,15 @@ def event_json(conn: sqlite3.Connection, ea: EventAnalysis, now: datetime) -> di
     flags: list[str] = []
     if not ea.odds_fresh:
         flags.append("Kursy nieaktualne — rekomendacje wstrzymane" if ea.odds_updated else "Brak kursów dla tego meczu w darmowym planie")
+    pp = ea.params or default_params(ev["league_key"])
     if ea.market_only:
         flags.append("Za mało wspólnej historii w darmowych źródłach dla tych rozgrywek — pokazujemy tylko kursy, bez rekomendacji")
     elif not ea.known:
         flags.append("Za mało danych historycznych o jednej z drużyn — brak rekomendacji")
+    if not ea.market_only:
+        waiting = [MARKET_NAME.get(m, m) for m in ("h2h", "totals", "spreads") if any(x.market == m for x in ea.markets) and not pp.can_recommend(m)]
+        if waiting:
+            flags.append(f"Model w walidacji ({', '.join(waiting)}): backtest nie wykazał przewagi nad rynkiem — prognozy modelu są pokazywane, typy wyłączone")
     if ev["sport"] == "football":
         flags.append("Brak xG w darmowym źródle — model oparty na bramkach")
     if absences is None:
@@ -331,10 +337,43 @@ def provider_health(conn: sqlite3.Connection, configured: dict[str, bool]) -> li
     return out
 
 
-def write_all(conn: sqlite3.Connection, analyses: list[EventAnalysis], now: datetime, out_dir: Path, configured: dict[str, bool], run_kind: str) -> dict[str, int]:
+MARKET_NAME = {"h2h": "1X2 / zwycięzca", "totals": "suma goli / punktów", "spreads": "handicap"}
+
+# Written by the backtest (python -m app.backtest run); published unchanged next to the live data.
+BACKTEST_PATH = Path(__file__).resolve().parents[1] / "backtest" / "backtest.json"
+
+
+def models_json(params: dict[str, LeagueParams]) -> list[dict[str, Any]]:
+    """Per league: is the model allowed to recommend, with which weight, and why (Profile / Stats screens)."""
+    out = []
+    for lg in LEAGUES:
+        pp = params.get(lg.key) or default_params(lg.key)
+        out.append(
+            {
+                "league": lg.key,
+                "name": lg.name,
+                "sport": lg.sport,
+                "status": pp.status,
+                "statusLabel": STATUS_LABEL.get(pp.status, pp.status),
+                "reason": pp.reason,
+                "minEv": pp.min_ev,
+                "calibratedAt": pp.calibrated_at,
+                "markets": [
+                    {"market": m, "name": MARKET_NAME.get(m, m), "status": mp.status, "statusLabel": STATUS_LABEL.get(mp.status, mp.status), "modelWeight": mp.model_weight, "reason": mp.reason}
+                    for m, mp in pp.markets.items()
+                ],
+            }
+        )
+    return out
+
+
+def write_all(
+    conn: sqlite3.Connection, analyses: list[EventAnalysis], now: datetime, out_dir: Path, configured: dict[str, bool], run_kind: str, params: dict[str, LeagueParams] | None = None
+) -> dict[str, int]:
     out_dir.mkdir(parents=True, exist_ok=True)
     events = [event_json(conn, a, now) for a in analyses]
     history = history_json(conn)
+    backtest = BACKTEST_PATH.exists()
     meta = {
         "origin": "live",
         "generatedAt": iso(now),
@@ -342,10 +381,13 @@ def write_all(conn: sqlite3.Connection, analyses: list[EventAnalysis], now: date
         "bookmakers": bookmaker_titles(conn),
         "providers": provider_health(conn, configured),
         "notifications": notifications_json(conn, now),
-        "backtestAvailable": False,
+        "backtestAvailable": backtest,
+        "models": models_json(params or {}),
     }
     for name, payload in (("events.json", events), ("history.json", history), ("meta.json", meta)):
         tmp = out_dir / f".{name}.tmp"
         tmp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         tmp.replace(out_dir / name)
+    if backtest:
+        (out_dir / "backtest.json").write_bytes(BACKTEST_PATH.read_bytes())
     return {"events": len(events), "history": len(history)}

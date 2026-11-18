@@ -1,7 +1,9 @@
 """Price every available market of an event and decide which selections (if any) are recommendable.
 
-Rules (hard): EV >= MIN_EV, quality >= MIN_QUALITY, price <= MAX_PRICE, half-point lines only (no pushes),
-fresh odds, model has data on both teams. Missing data lowers quality; it never raises it.
+Rules (hard): EV >= min_ev, quality >= min_quality, price <= MAX_PRICE, half-point lines only (no pushes),
+fresh odds, model has data on both teams, and the league/market was validated by the backtest (app/params.py).
+Missing data lowers quality; it never raises it. Thresholds and the model/market weight come per league from
+app/calibration.json (ETAP 5); the same function is used by the backtest, so live and backtest gate identically.
 """
 from __future__ import annotations
 
@@ -10,7 +12,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Callable
 
-from ..config import MAX_DISAGREEMENT, MAX_ODDS_AGE_H, MAX_PRICE, MIN_EV, MIN_QUALITY, MODEL_WEIGHT
+from ..config import MAX_ODDS_AGE_H, MAX_PRICE
+from ..params import LeagueParams
 from .odds import expected_value, fair_probabilities, implied_probability, overround
 
 
@@ -68,6 +71,7 @@ class Context:
     completeness: float  # 0..1: share of data sources available for this event
     both_teams_known: bool
     lineups_confirmed: bool = False
+    params: LeagueParams = field(default_factory=lambda: LeagueParams("default"))
 
 
 def fmt_pct(x: float, d: int = 1) -> str:
@@ -97,11 +101,14 @@ def price_market(mk: Market, half_width: Callable[[float], float], ctx: Context)
         fair = fair_probabilities(med) if all(m > 1 for m in med) else [s.raw_model_prob for s in mk.selections]
         mk.margin = None
 
+    pp = ctx.params
+    mp = pp.market(mk.market)
+    w = mp.model_weight
     out: list[Candidate] = []
     for s, f in zip(mk.selections, fair):
         s.fair_prob = f
-        s.model_prob = MODEL_WEIGHT * s.raw_model_prob + (1 - MODEL_WEIGHT) * f
-        hw = MODEL_WEIGHT * half_width(s.raw_model_prob) + (1 - MODEL_WEIGHT) * 0.01
+        s.model_prob = w * s.raw_model_prob + (1 - w) * f
+        hw = w * half_width(s.raw_model_prob) * mp.hw_scale + (1 - w) * 0.01
         s.prob_low, s.prob_high = max(0.005, s.model_prob - hw), min(0.995, s.model_prob + hw)
         fresh = [q for q in s.quotes if q.captured_at >= fresh_cut]
         best = max(fresh, key=lambda q: q.price) if fresh else None
@@ -117,31 +124,38 @@ def price_market(mk: Market, half_width: Callable[[float], float], ctx: Context)
     top = max(out, key=lambda c: c.ev) if out else None
     if not out:
         mk.verdict = "Brak aktualnych kursów dla tego rynku — nie wyceniono."
+    elif not pp.can_recommend(mk.market) and top:
+        mk.verdict = (
+            f"Model w walidacji ({mp.reason or 'brak dowodu przewagi nad rynkiem w backteście'}) — bez rekomendacji. "
+            f"Najlepsza selekcja: „{top.sel.label}”, EV {fmt_signed(top.ev)}."
+        )
     elif valid:
         b = max(valid, key=lambda c: c.ev)
         mk.verdict = f"Dodatnie EV {fmt_signed(b.ev)} na „{b.sel.label}”."
     elif top and top.ev <= 0:
         mk.verdict = f"Najlepsza selekcja ({top.sel.label}) ma ujemne EV {fmt_signed(top.ev)} — kurs poniżej wartości godziwej."
-    elif top and top.ev < MIN_EV:
-        mk.verdict = f"Przewaga {fmt_signed(top.ev)} na „{top.sel.label}” poniżej progu {fmt_pct(MIN_EV, 0)} — mieści się w niepewności."
-    elif top and abs(top.sel.raw_model_prob - top.sel.fair_prob) > MAX_DISAGREEMENT:
+    elif top and top.ev < pp.min_ev:
+        mk.verdict = f"Przewaga {fmt_signed(top.ev)} na „{top.sel.label}” poniżej progu {fmt_pct(pp.min_ev, 0)} — mieści się w niepewności."
+    elif top and abs(top.sel.raw_model_prob - top.sel.fair_prob) > pp.max_disagreement:
         mk.verdict = (
             f"„{top.sel.label}”: model ({fmt_pct(top.sel.raw_model_prob)}) i rynek ({fmt_pct(top.sel.fair_prob)}) różnią się zbyt mocno — "
             "prawdopodobnie modelowi brakuje informacji (kontuzje, skład). Bez rekomendacji."
         )
     elif top:
-        mk.verdict = f"„{top.sel.label}”: EV {fmt_signed(top.ev)}, ale ocena jakości {top.quality} < {MIN_QUALITY} lub warunki niespełnione."
+        mk.verdict = f"„{top.sel.label}”: EV {fmt_signed(top.ev)}, ale ocena jakości {top.quality} < {pp.min_quality} lub warunki niespełnione."
     return valid
 
 
 def recommendable(c: Candidate, ctx: Context) -> bool:
     half_point = c.sel.line is None or (abs(c.sel.line * 2) % 2 == 1)
+    pp = ctx.params
     return (
-        c.ev >= MIN_EV
-        and c.quality >= MIN_QUALITY
+        pp.can_recommend(c.market.market)
+        and c.ev >= pp.min_ev
+        and c.quality >= pp.min_quality
         and c.best.price <= MAX_PRICE
         and half_point
-        and abs(c.sel.raw_model_prob - c.sel.fair_prob) <= MAX_DISAGREEMENT
+        and abs(c.sel.raw_model_prob - c.sel.fair_prob) <= pp.max_disagreement
         and ctx.both_teams_known
         and ctx.kickoff - ctx.now > timedelta(minutes=30)
     )
