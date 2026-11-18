@@ -175,9 +175,10 @@ def run_nba(now: datetime, offline: bool) -> tuple[dict, LeagueParams | None, li
 
 
 def run_cups(now: datetime, offline: bool, db: sqlite3.Connection | None, validate: bool = True) -> tuple[dict, dict | None]:
-    cm_list = cups(os.environ.get("APISPORTS_KEY"), offline)
+    key = os.environ.get("APISPORTS_KEY")
+    cm_list = cups(key, offline)
     if not cm_list:
-        return {"error": "brak meczów pucharowych (API-Football 2022-2024)"}, None
+        return {"error": f"brak meczów pucharowych (API-Football 2022-2024; klucz {'jest' if key else 'BRAK'})"}, None
     ds = cup_data.build(now, cm_list, db, offline)
     rep: dict = {"cup_matches": len(ds.cup_rows), "teams": len(ds.entries), "domestic_matches": len(ds.matches) - len(ds.cup_rows), "skipped": ds.skipped}
     if validate:
@@ -231,7 +232,7 @@ def history_entry(b: E.Bet) -> dict:
         "kickoff": iso(r.kickoff),
         "market": mtype,
         "label": b.label,
-        "bookmaker": "max" if b.bookmaker == "max" else "ref",
+        "bookmaker": "Najlepszy kurs rynku" if b.bookmaker == "max" else "Kurs referencyjny",
         "openingPrice": round(b.price, 3),
         "closingPrice": round(b.close_price, 3) if b.close_price else None,
         "clv": _r(b.clv),
@@ -296,7 +297,12 @@ def run(offline: bool = False, now: datetime | None = None) -> dict:
     except SourceError as e:
         cups_rep, ratings = {"error": str(e)}, None
     write_outputs(now, fb, fb_params, nba, nba_params, cups_rep, ratings, fb_bets + nba_bets)
-    return {"football": {k: v["status"] for k, v in fb["leagues"].items()}, "nba": nba_params.status if nba_params else None, "cups": bool(ratings)}
+    return {
+        "football": {k: v["status"] for k, v in fb["leagues"].items()},
+        "nba": nba_params.status if nba_params else None,
+        "cups": {k: v for k, v in cups_rep.items() if k in ("error", "cup_matches", "teams", "domestic_matches", "validation")},
+        "skipped": fb.get("skipped", []) + nba.get("skipped", []) + cups_rep.get("skipped", []),
+    }
 
 
 def ratings_only(offline: bool = False, now: datetime | None = None) -> dict:

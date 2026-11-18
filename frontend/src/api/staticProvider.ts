@@ -6,6 +6,7 @@ import type {
   DashboardSummary,
   Freshness,
   HistoryEntry,
+  ModelStatus,
   PerformanceSummary,
   ProviderHealth,
   SportEvent,
@@ -23,6 +24,8 @@ export interface LiveMeta {
   providers: ProviderHealth[];
   notifications: AppNotification[];
   backtestAvailable: boolean;
+  /** Backtest verdict per competition (pipeline >= ETAP 5). */
+  models?: ModelStatus[];
 }
 
 const READ_KEY = "przewaga.notifications.read";
@@ -86,12 +89,13 @@ export class StaticDataProvider implements DataProvider {
   readonly mode = "live" as const;
   private events: Promise<SportEvent[]>;
   private history: Promise<HistoryEntry[]>;
+  private backtest: Promise<HistoryEntry[]> | null = null;
   private settings: UserSettings = loadSettings();
   private read: Set<string>;
 
   constructor(
     private meta: LiveMeta,
-    base: string,
+    private base: string,
     readonly offlineSince: string | null = null,
   ) {
     registerBookmakers(meta.bookmakers);
@@ -135,12 +139,25 @@ export class StaticDataProvider implements DataProvider {
     return (await this.events).find((e) => e.id === id) ?? null;
   }
 
+  /** Simulated out-of-sample bets of the backtest: loaded only when the Backtest tab is opened. */
+  private backtestEntries(): Promise<HistoryEntry[]> {
+    if (!this.meta.backtestAvailable) return Promise.resolve([]);
+    this.backtest ??= getJson<HistoryEntry[]>(`${this.base}/backtest.json`, "backtest")
+      .then((r) => r.body)
+      .catch(() => []);
+    return this.backtest;
+  }
+
   async getHistory(scope: "live" | "backtest") {
-    return scope === "live" ? this.history : [];
+    return scope === "live" ? this.history : this.backtestEntries();
   }
 
   async getPerformance(scope: "live" | "backtest"): Promise<PerformanceSummary> {
-    return computePerformance(scope === "live" ? await this.history : [], scope);
+    return computePerformance(scope === "live" ? await this.history : await this.backtestEntries(), scope);
+  }
+
+  async getModelStatus() {
+    return this.meta.models ?? [];
   }
 
   async getNotifications() {

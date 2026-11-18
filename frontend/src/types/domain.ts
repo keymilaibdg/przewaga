@@ -279,6 +279,19 @@ export interface UserSettings {
   dailyLimitUnits: number;
 }
 
+/** Per competition: may the model recommend? Decided by the walk-forward backtest (ETAP 5). */
+export interface ModelStatus {
+  league: string;
+  name: string;
+  sport: Sport;
+  status: "validated" | "validating" | "market_only";
+  statusLabel: string;
+  reason: string;
+  minEv: number;
+  calibratedAt: string | null;
+  markets: { market: string; name: string; status: ModelStatus["status"]; statusLabel: string; modelWeight: number; reason: string }[];
+}
+
 export interface ProviderHealth {
   id: string;
   name: string;

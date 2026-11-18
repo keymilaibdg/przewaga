@@ -4,6 +4,7 @@ import type {
   Bookmaker,
   DashboardSummary,
   HistoryEntry,
+  ModelStatus,
   PerformanceSummary,
   ProviderHealth,
   Sport,
@@ -32,4 +33,6 @@ export interface DataProvider {
   getBookmakers(): Promise<Bookmaker[]>;
   /** Whether a historical backtest dataset is available. */
   hasBacktest(): boolean;
+  /** Which competitions the model may recommend in (backtest verdict). */
+  getModelStatus(): Promise<ModelStatus[]>;
 }

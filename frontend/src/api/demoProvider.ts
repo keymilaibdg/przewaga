@@ -79,6 +79,10 @@ export class DemoProvider implements DataProvider {
     return s;
   }
 
+  async getModelStatus() {
+    return [];
+  }
+
   hasBacktest() {
     return true;
   }

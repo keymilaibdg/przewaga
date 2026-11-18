@@ -8,7 +8,7 @@ import { SportIcon } from "../components/match/SportIcon";
 import { bookmakerName } from "../lib/bookmakers";
 import { dateKey, fmtDay, fmtDec, fmtPct, fmtPrice, fmtSignedPct, fmtUnits, plural, resultLabel } from "../lib/format";
 import { cn } from "../lib/cn";
-import type { BetResult, HistoryEntry, PerformanceSummary } from "../types/domain";
+import type { BetResult, HistoryEntry, ModelStatus, PerformanceSummary } from "../types/domain";
 
 type Scope = "live" | "backtest";
 
@@ -42,6 +42,7 @@ export function StatsPage({ initialTab }: { initialTab?: string | null }) {
           : "Symulacja historyczna walk-forward — dane wyłącznie sprzed meczu. Liczona osobno, nie miesza się z wynikami rekomendacji."}
       </p>
       <div key={`${tab}-${scope}`} className="animate-fade-up mt-4">
+        {scope === "backtest" && tab === "perf" && <ModelStatusCard />}
         {scope === "backtest" && !provider.hasBacktest() ? (
           <Card>
             <EmptyState icon={<LuFlaskConical className="size-5" />} title="Backtest nie jest jeszcze dostępny" body="Wyniki testów historycznych pojawią się po ETAPIE 5 (kalibracja i backtesting modeli). Nie mieszamy ich z wynikami rekomendacji." />
@@ -54,6 +55,47 @@ export function StatsPage({ initialTab }: { initialTab?: string | null }) {
       </div>
       <ResponsibleNote className="mt-8" />
     </div>
+  );
+}
+
+const STATUS_TONE: Record<ModelStatus["status"], "pos" | "warn" | "neutral"> = { validated: "pos", validating: "warn", market_only: "neutral" };
+
+/** Backtest verdict: in which competitions and markets the model may recommend, and why not elsewhere. */
+function ModelStatusCard() {
+  const q = useQuery((p) => p.getModelStatus(), []);
+  if (!q.data || q.data.length === 0) return null;
+  return (
+    <Card className="mb-4 p-4">
+      <h3 className="text-sm font-semibold">Status modeli</h3>
+      <p className="mt-0.5 mb-3 text-xs text-fg-faint">
+        Typy pojawiają się tylko tam, gdzie model w teście walk-forward poprawił prognozę rynku bez marży. Wynik niżej: symulowane typy z okresu testowego (dane wyłącznie sprzed meczu).
+      </p>
+      <ul className="space-y-3">
+        {q.data.map((m) => (
+          <li key={m.league} className="border-t border-white/[0.06] pt-3 first:border-0 first:pt-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <SportIcon sport={m.sport} className="size-3.5" /> {m.name}
+              </span>
+              <Badge tone={STATUS_TONE[m.status]}>{m.statusLabel}</Badge>
+            </div>
+            {m.markets.length > 0 ? (
+              <ul className="mt-1.5 space-y-1">
+                {m.markets.map((mk) => (
+                  <li key={mk.market} className="text-[11px] leading-relaxed text-fg-muted">
+                    <span className={cn("font-semibold", mk.status === "validated" ? "text-pos" : "text-fg")}>{mk.name}</span>
+                    {" · "}waga modelu {fmtPct(mk.modelWeight, 0)}
+                    {mk.reason ? ` · ${mk.reason}` : ""}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              m.reason && <p className="mt-1 text-[11px] leading-relaxed text-fg-muted">{m.reason}</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
