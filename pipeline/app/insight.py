@@ -296,6 +296,17 @@ def games_pl(k: int) -> str:
     return f"{k} mecz" if k == 1 else f"{k} mecze" if 2 <= k % 10 <= 4 and not 12 <= k % 100 <= 14 else f"{k} meczów"
 
 
+def history_judgement(h: dict[str, Any]) -> str:
+    """Were such prices too short (favourites overrated), fair, or too long — beyond chance?"""
+    if h["winRateHigh"] < h["fair"]:
+        return "Takie kursy były zbyt niskie: faworyci wygrywali rzadziej, niż wynika z kursu nawet bez marży — tu jest realna pułapka."
+    if h["winRateLow"] > h["fair"]:
+        return "Takie kursy były raczej za wysokie (faworyci wygrywali częściej) — ale po podatku i tak zwykle bez zysku."
+    if h["winRate"] < h["fair"] - 0.015:
+        return "Wygrywały nieco rzadziej, niż zakłada kurs bez marży, ale różnica mieści się w przypadku. Pułapką jest głównie marża i podatek."
+    return "Wycena była trafna — pułapką nie jest „ustawiona” szansa, tylko marża i podatek."
+
+
 def verdict(si: dict[str, Any], fav: bool, facts: dict[str, Any], side_is_home: bool | None, is_fb: bool) -> dict[str, Any]:
     """Plain-language verdict for one selection."""
     pts: list[str] = []
@@ -326,11 +337,10 @@ def verdict(si: dict[str, Any], fav: bool, facts: dict[str, Any], side_is_home: 
         pts.append(f"Opłaca się dopiero od kursu {pl(si['minPriceTaxed'], 2)} u polskiego bukmachera (z podatkiem).")
     h = si.get("history")
     if h:
-        trap = h["winRate"] < h["implied"] - 0.02
         pts.append(
             f"Historia ({h['league']}, {h['n']} selekcji z kursem {pl(h['from'], 2)}–{pl(h['to'], 2)}): wygrały {pct(h['winRate'], 1)} "
-            f"(95%: {pct(h['winRateLow'])}–{pct(h['winRateHigh'])}), kurs zakładał {pct(h['implied'], 1)}. "
-            + ("Takie kursy były historycznie zbyt niskie — tu jest pułapka." if trap else "Takie kursy były historycznie trafnie wyceniane — pułapką nie jest sama szansa, tylko marża i podatek.")
+            f"(95%: {pct(h['winRateLow'])}–{pct(h['winRateHigh'])}); kurs zakładał {pct(h['implied'], 1)}, a po odjęciu marży {pct(h['fair'], 1)}. "
+            + history_judgement(h)
             + f" Obstawianie wszystkich: {spct(h['roiAvg'])} przy kursie średnim, {spct(h['roiTaxed'])} po podatku."
         )
     if fav and price < 1.6:
@@ -399,10 +409,21 @@ def build(conn: sqlite3.Connection, a: EventAnalysis, model: DixonColes | Rating
         si["verdict"] = verdict(si, s is fav, facts, side_home, is_fb)
         sels.append(si)
     fav_price = max(q.price for q in fav.quotes)
-    return {
+    return _round({
         "favouriteSelectionId": f"{ev['id']}:{h2h.market}:{fav.key}:{fav.line}",
         "why": why_text(fav.label, fav_price, fav.key == "home", facts, is_fb) if fav.key != "draw" else "",
         "factors": facs,
         "selections": sels,
         "modelNote": "Prawdopodobieństwo = rynek bez marży" + (" połączony z modelem" if (a.params and a.params.weight('h2h') > 0) else "") + " (backtest: rynek prognozuje lepiej niż sam model).",
-    }
+    })
+
+
+def _round(x: Any) -> Any:
+    """Keep the published JSON small (the phone caches it)."""
+    if isinstance(x, float):
+        return round(x, 4)
+    if isinstance(x, dict):
+        return {k: _round(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_round(v) for v in x]
+    return x

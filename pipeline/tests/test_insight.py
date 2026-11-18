@@ -111,7 +111,7 @@ def test_pipeline_publishes_price_insight(tmp_path, monkeypatch) -> None:
         assert fav["price"] == min(s["price"] for s in pi["selections"])
         for s in pi["selections"]:
             assert s["selectionId"] in ids
-            assert s["breakEvenTaxed"] == pytest.approx(1 / (s["price"] * 0.88))
+            assert s["breakEvenTaxed"] == pytest.approx(1 / (s["price"] * 0.88), abs=1e-3)
             assert s["evTaxed"] < s["ev"] and s["verdict"]["points"] and s["verdict"]["level"] in ("value", "neutral", "avoid")
             assert 0 <= s["series"]["n10InLoss"] <= 1
         if e["league"]["id"] in ("epl", "nba"):

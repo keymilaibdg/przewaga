@@ -125,11 +125,11 @@ def markdown(res: dict, calib: dict) -> str:
             continue
         a(f"**{name(lg)}** ({d['matches']} meczów, {d['source']}):")
         a("")
-        a("| Kurs | Liczba | Wygrane (95% przedział) | Zakładał kurs | Zwrot przy kursie średnim | przy najlepszym | po podatku 12% |")
-        a("|---|---|---|---|---|---|---|")
+        a("| Kurs | Liczba | Wygrane (95% przedział) | Zakładał kurs | bez marży | Zwrot przy kursie średnim | przy najlepszym | po podatku 12% |")
+        a("|---|---|---|---|---|---|---|---|")
         for b in rows:
             a(f"| {num(b['from'], 2)}–{num(b['to'], 2)} | {b['n']} | {pct(b['winRate'], 1, False)} ({pct(b['winRateLow'], 0, False)}–{pct(b['winRateHigh'], 0, False)}) | "
-              f"{pct(b['implied'], 1, False)} | {pct(b['roiAvg'])} | {pct(b['roiBest'])} | {pct(b['roiTaxed'])} |")
+              f"{pct(b['implied'], 1, False)} | {pct(b['fair'], 1, False)} | {pct(b['roiAvg'])} | {pct(b['roiBest'])} | {pct(b['roiTaxed'])} |")
         a("")
     a("## Ograniczenia")
     a("")

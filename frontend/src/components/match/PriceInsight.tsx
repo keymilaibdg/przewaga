@@ -102,7 +102,8 @@ export function PriceInsightCard({ e, insight }: { e: SportEvent; insight: Price
 }
 
 function History({ h, price }: { h: NonNullable<SelectionInsight["history"]>; price: number }) {
-  const trap = h.winRate < h.implied - 0.02;
+  const trap = h.winRateHigh < h.fair;
+  const longer = h.winRateLow > h.fair;
   return (
     <Section title={`Historia kursów ${fmtPrice(h.from)}–${fmtPrice(h.to)} (${h.league})`} open={price < 1.6}>
       <p className="mb-2 text-[11px] leading-relaxed text-fg-faint">
@@ -115,8 +116,10 @@ function History({ h, price }: { h: NonNullable<SelectionInsight["history"]>; pr
       <Kv label="Zwrot po podatku 12%" value={fmtSignedPct(h.roiTaxed)} tone={h.roiTaxed >= 0 ? "pos" : "neg"} />
       <p className={cn("mt-2 text-[11px] leading-relaxed", trap ? "text-neg" : "text-fg-muted")}>
         {trap
-          ? "Takie kursy wygrywały rzadziej, niż zakładał kurs — bukmacherzy ustawiali je za nisko."
-          : "Takie kursy wygrywały mniej więcej tak często, jak zakładał kurs — strata bierze się z marży i podatku, nie z „ustawionego” faworyta."}
+          ? "Takie kursy wygrywały rzadziej, niż wynika z kursu nawet po odjęciu marży — faworyci w tym przedziale byli przeceniani."
+          : longer
+            ? "Takie kursy wygrywały częściej, niż zakładał rynek — mimo to po podatku zwykle bez zysku."
+            : "Takie kursy wygrywały mniej więcej tak często, jak zakładał rynek bez marży (różnica w granicach przypadku) — strata bierze się z marży i podatku, nie z „ustawionego” faworyta."}
       </p>
     </Section>
   );
