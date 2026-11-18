@@ -1,6 +1,6 @@
 # Backtest walk-forward i kalibracja (ETAP 5)
 
-Wygenerowano automatycznie: 2026-11-18T11:23:50Z (`python -m app.backtest run`, workflow „Backtest i kalibracja”). Nie edytować ręcznie.
+Wygenerowano automatycznie: 2026-11-18T11:58:15Z (`python -m app.backtest run`, workflow „Backtest i kalibracja”). Nie edytować ręcznie.
 
 ## Werdykt
 
@@ -110,6 +110,19 @@ Test: 2024/25 (wszystkie fazy, model z danych sprzed 1.07.2024), 461 meczów z d
 | 75% | 74% | 39 |
 
 Darmowe źródła nie mają historii kursów pucharowych, więc przewagi nad rynkiem nie da się jeszcze sprawdzić: model jest pokazywany w aplikacji, typy pozostają wyłączone, a kursy zbierane codziennie posłużą do walidacji.
+
+## Tryb rynkowy (bez modelu)
+
+Typ = najlepszy kurs rynku co najmniej 3% powyżej kursu uczciwego (kurs referencyjny po odjęciu marży), kurs ≤ 4,0, najwyżej 15% ponad kurs średni, linie połówkowe. Reguły ustalone z góry (nic nie dobierano na danych), więc liczą się wszystkie sezony. Kluczowa miara: EV wobec linii zamknięcia (czy kurs wzięty był lepszy od uczciwego kursu tuż przed meczem) — mniej zależna od szczęścia niż ROI.
+
+| Liga | Typy | Trafność | Śr. kurs | ROI (kurs najlepszy) | ROI po podatku | EV wobec zamknięcia | Test od 1.07.2025: typy / ROI |
+|---|---|---|---|---|---|---|---|
+| Premier League | 239 | 38,1% | 3,08 | +8,1% (±9,5%) | -4,8% | +3,9% | 11 / +5,7% |
+| La Liga | 288 | 33,3% | 3,16 | +0,9% (±8,7%) | -11,2% | +4,3% | 8 / -12,8% |
+| Bundesliga | 231 | 31,6% | 3,32 | +2,8% (±10,3%) | -9,5% | +3,4% | 10 / -30,3% |
+| Ekstraklasa | 305 | 38,7% | 2,84 | +4,8% (±8,0%) | -7,8% | +5,2% | 26 / -3,5% |
+
+NBA: archiwum ma jeden kurs na mecz (konsensus), więc trybu rynkowego nie da się sprawdzić na historii — w aplikacji działa na bieżących kursach wielu bukmacherów.
 
 ## Niskie kursy: czy to pułapka?
 
