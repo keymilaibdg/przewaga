@@ -24,7 +24,11 @@ for i in range(40):
         pages = []
         with pdfplumber.open(io.BytesIO(body)) as pdf:
             for p in pdf.pages[:3]:
-                pages.append({"width": p.width, "words": [{"text": w["text"], "x0": round(w["x0"], 1), "x1": round(w["x1"], 1), "top": round(w["top"], 1)} for w in p.extract_words(keep_blank_chars=False)]})
+                pages.append({"width": p.width, "words": [{"text": w["text"], "x0": round(w["x0"], 1), "x1": round(w["x1"], 1), "top": round(w["top"], 1)} for w in p.extract_words(x_tolerance=1)]})
+            p0 = pdf.pages[0]
+            for tol in (0.5, 1, 1.5, 2):
+                print("tol", tol, [w["text"] for w in p0.extract_words(x_tolerance=tol)][:40])
+            print("chars sample", [(c["text"], round(c["x0"], 1), round(c["x1"], 1)) for c in p0.chars[60:110]])
         import os; os.makedirs("pipeline/tests/data", exist_ok=True)
         json.dump({"stamp": stamp, "pages": pages}, open("pipeline/tests/data/nba_injury_words.json", "w"), indent=0)
         break
