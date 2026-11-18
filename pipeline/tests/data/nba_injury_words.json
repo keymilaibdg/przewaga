@@ -1,0 +1,1172 @@
+{
+"stamp": "2026-11-18_06_30AM",
+"pages": [
+{
+"width": 841.95,
+"words": [
+{
+"text": "Injury",
+"x0": 288.1,
+"x1": 348.5,
+"top": 45.5
+},
+{
+"text": "Report:",
+"x0": 354.6,
+"x1": 431.2,
+"top": 45.5
+},
+{
+"text": "11/18/26",
+"x0": 437.3,
+"x1": 532.7,
+"top": 45.5
+},
+{
+"text": "06:30",
+"x0": 538.8,
+"x1": 595.4,
+"top": 45.5
+},
+{
+"text": "AM",
+"x0": 601.5,
+"x1": 638.0,
+"top": 45.5
+},
+{
+"text": "GameDate",
+"x0": 23.1,
+"x1": 75.0,
+"top": 107.7
+},
+{
+"text": "GameTime",
+"x0": 119.6,
+"x1": 172.7,
+"top": 107.7
+},
+{
+"text": "Matchup",
+"x0": 200.0,
+"x1": 241.8,
+"top": 107.7
+},
+{
+"text": "Team",
+"x0": 264.2,
+"x1": 290.0,
+"top": 107.7
+},
+{
+"text": "PlayerName",
+"x0": 425.0,
+"x1": 484.7,
+"top": 107.7
+},
+{
+"text": "CurrentStatus",
+"x0": 585.7,
+"x1": 653.3,
+"top": 107.7
+},
+{
+"text": "Reason",
+"x0": 666.1,
+"x1": 699.9,
+"top": 107.7
+},
+{
+"text": "11/18/2026",
+"x0": 24.1,
+"x1": 72.3,
+"top": 128.9
+},
+{
+"text": "07:00(ET)",
+"x0": 120.6,
+"x1": 161.6,
+"top": 128.9
+},
+{
+"text": "HOU@IND",
+"x0": 201.0,
+"x1": 244.3,
+"top": 128.9
+},
+{
+"text": "HoustonRockets",
+"x0": 265.2,
+"x1": 333.7,
+"top": 128.9
+},
+{
+"text": "Capela,Clint",
+"x0": 426.0,
+"x1": 476.7,
+"top": 128.9
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 128.9
+},
+{
+"text": "Injury/Illness-RightAnkleSprain",
+"x0": 667.1,
+"x1": 801.2,
+"top": 128.9
+},
+{
+"text": "Copeland,Quadir",
+"x0": 426.0,
+"x1": 496.9,
+"top": 151.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 151.0
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 151.0
+},
+{
+"text": "Phillips,Julian",
+"x0": 426.0,
+"x1": 482.5,
+"top": 173.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 173.0
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 173.0
+},
+{
+"text": "Thompson,Amen",
+"x0": 426.0,
+"x1": 497.8,
+"top": 195.1
+},
+{
+"text": "Questionable",
+"x0": 586.7,
+"x1": 641.0,
+"top": 195.1
+},
+{
+"text": "Injury/Illness-LeftKneeSoreness",
+"x0": 667.1,
+"x1": 804.0,
+"top": 195.1
+},
+{
+"text": "Injury/Illness-RightACLRepair/",
+"x0": 667.1,
+"x1": 800.3,
+"top": 218.1
+},
+{
+"text": "IndianaPacers",
+"x0": 265.2,
+"x1": 324.2,
+"top": 225.1
+},
+{
+"text": "Furphy,Johnny",
+"x0": 426.0,
+"x1": 487.8,
+"top": 225.1
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 225.1
+},
+{
+"text": "Surgery",
+"x0": 667.1,
+"x1": 698.1,
+"top": 232.1
+},
+{
+"text": "Haliburton,Tyrese",
+"x0": 426.0,
+"x1": 500.9,
+"top": 254.2
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 254.2
+},
+{
+"text": "Injury/Illness-LeftHamstringStrain",
+"x0": 667.1,
+"x1": 813.0,
+"top": 254.2
+},
+{
+"text": "McConnell,T.J.",
+"x0": 426.0,
+"x1": 487.3,
+"top": 276.2
+},
+{
+"text": "Probable",
+"x0": 586.7,
+"x1": 623.2,
+"top": 276.2
+},
+{
+"text": "Injury/Illness-RightHamstringStrain",
+"x0": 667.1,
+"x1": 818.4,
+"top": 276.2
+},
+{
+"text": "Injury/Illness-LeftHipSoreness/",
+"x0": 667.1,
+"x1": 803.5,
+"top": 298.3
+},
+{
+"text": "Nembhard,Andrew",
+"x0": 426.0,
+"x1": 506.1,
+"top": 305.3
+},
+{
+"text": "Questionable",
+"x0": 586.7,
+"x1": 641.0,
+"top": 305.3
+},
+{
+"text": "Tightness",
+"x0": 667.1,
+"x1": 705.6,
+"top": 312.3
+},
+{
+"text": "Sheppard,Ben",
+"x0": 426.0,
+"x1": 485.2,
+"top": 334.3
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 334.3
+},
+{
+"text": "Injury/Illness-LeftMeniscusSurgery",
+"x0": 667.1,
+"x1": 816.6,
+"top": 334.3
+},
+{
+"text": "Injury/Illness-Left5thMetatarsal",
+"x0": 667.1,
+"x1": 805.1,
+"top": 357.4
+},
+{
+"text": "MEM@CLE",
+"x0": 201.0,
+"x1": 246.3,
+"top": 364.4
+},
+{
+"text": "MemphisGrizzlies",
+"x0": 265.2,
+"x1": 339.2,
+"top": 364.4
+},
+{
+"text": "Jackson,GG",
+"x0": 426.0,
+"x1": 474.5,
+"top": 364.4
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 364.4
+},
+{
+"text": "Fracture",
+"x0": 667.1,
+"x1": 701.2,
+"top": 371.4
+},
+{
+"text": "Injury/Illness-RightHip",
+"x0": 667.1,
+"x1": 764.2,
+"top": 393.4
+},
+{
+"text": "Jerome,Ty",
+"x0": 426.0,
+"x1": 470.0,
+"top": 400.5
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 400.5
+},
+{
+"text": "Impingement",
+"x0": 667.1,
+"x1": 721.6,
+"top": 407.5
+},
+{
+"text": "Injury/Illness-LumbarDisc",
+"x0": 667.1,
+"x1": 776.9,
+"top": 429.5
+},
+{
+"text": "PippenJr.,Scotty",
+"x0": 426.0,
+"x1": 495.7,
+"top": 436.5
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 436.5
+},
+{
+"text": "Herniation",
+"x0": 667.1,
+"x1": 710.2,
+"top": 443.6
+},
+{
+"text": "Saunders,Richie",
+"x0": 426.0,
+"x1": 492.7,
+"top": 465.6
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 465.6
+},
+{
+"text": "Injury/Illness-RightKneeSurgery",
+"x0": 667.1,
+"x1": 804.1,
+"top": 465.6
+},
+{
+"text": "Stewart,Isaiah",
+"x0": 426.0,
+"x1": 486.0,
+"top": 487.6
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 487.6
+},
+{
+"text": "Injury/Illness-Illness",
+"x0": 667.1,
+"x1": 752.2,
+"top": 487.6
+},
+{
+"text": "Page1of7",
+"x0": 398.5,
+"x1": 443.4,
+"top": 538.1
+}
+]
+},
+{
+"width": 841.95,
+"words": [
+{
+"text": "Injury",
+"x0": 288.1,
+"x1": 348.5,
+"top": 45.5
+},
+{
+"text": "Report:",
+"x0": 354.6,
+"x1": 431.2,
+"top": 45.5
+},
+{
+"text": "11/18/26",
+"x0": 437.3,
+"x1": 532.7,
+"top": 45.5
+},
+{
+"text": "06:30",
+"x0": 538.8,
+"x1": 595.4,
+"top": 45.5
+},
+{
+"text": "AM",
+"x0": 601.5,
+"x1": 638.0,
+"top": 45.5
+},
+{
+"text": "Injury/Illness-RightElbowInjury",
+"x0": 667.1,
+"x1": 800.9,
+"top": 83.6
+},
+{
+"text": "ClevelandCavaliers",
+"x0": 265.2,
+"x1": 343.6,
+"top": 90.6
+},
+{
+"text": "Merrill,Sam",
+"x0": 426.0,
+"x1": 475.5,
+"top": 90.6
+},
+{
+"text": "Questionable",
+"x0": 586.7,
+"x1": 641.0,
+"top": 90.6
+},
+{
+"text": "Management",
+"x0": 667.1,
+"x1": 721.7,
+"top": 97.6
+},
+{
+"text": "Mobley,Evan",
+"x0": 426.0,
+"x1": 481.0,
+"top": 119.7
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 119.7
+},
+{
+"text": "Injury/Illness-LeftGreatToeSprain",
+"x0": 667.1,
+"x1": 813.2,
+"top": 119.7
+},
+{
+"text": "Injury/Illness-LowBackStress",
+"x0": 667.1,
+"x1": 791.5,
+"top": 141.7
+},
+{
+"text": "Tomlin,Nae'Qwan",
+"x0": 426.0,
+"x1": 501.0,
+"top": 148.7
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 148.7
+},
+{
+"text": "Reaction",
+"x0": 667.1,
+"x1": 702.6,
+"top": 155.8
+},
+{
+"text": "Injury/Illness-RightAnkleInjury",
+"x0": 667.1,
+"x1": 798.9,
+"top": 177.8
+},
+{
+"text": "Tyson,Jaylon",
+"x0": 426.0,
+"x1": 479.9,
+"top": 184.8
+},
+{
+"text": "Doubtful",
+"x0": 586.7,
+"x1": 622.6,
+"top": 184.8
+},
+{
+"text": "Management",
+"x0": 667.1,
+"x1": 721.7,
+"top": 191.8
+},
+{
+"text": "Udeh,Jr.,Ernest",
+"x0": 426.0,
+"x1": 492.4,
+"top": 213.9
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 213.9
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 213.9
+},
+{
+"text": "Watson,Peyton",
+"x0": 426.0,
+"x1": 490.7,
+"top": 235.9
+},
+{
+"text": "Questionable",
+"x0": 586.7,
+"x1": 641.0,
+"top": 235.9
+},
+{
+"text": "Injury/Illness-LowBackContusion",
+"x0": 667.1,
+"x1": 808.4,
+"top": 235.9
+},
+{
+"text": "MIL@MIA",
+"x0": 201.0,
+"x1": 242.0,
+"top": 259.0
+},
+{
+"text": "MilwaukeeBucks",
+"x0": 265.2,
+"x1": 335.7,
+"top": 259.0
+},
+{
+"text": "Dieng,Ousmane",
+"x0": 426.0,
+"x1": 492.9,
+"top": 259.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 259.0
+},
+{
+"text": "Injury/Illness-LeftFingerFracture",
+"x0": 667.1,
+"x1": 806.6,
+"top": 259.0
+},
+{
+"text": "Jones,Kam",
+"x0": 426.0,
+"x1": 471.3,
+"top": 281.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 281.0
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 281.0
+},
+{
+"text": "Markovic,Bogoljub",
+"x0": 426.0,
+"x1": 504.3,
+"top": 303.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 303.0
+},
+{
+"text": "GLeague-OnAssignment",
+"x0": 667.1,
+"x1": 773.6,
+"top": 303.0
+},
+{
+"text": "Nance,Pete",
+"x0": 426.0,
+"x1": 474.9,
+"top": 325.1
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 325.1
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 325.1
+},
+{
+"text": "Ryan,Cormac",
+"x0": 426.0,
+"x1": 481.8,
+"top": 347.1
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 347.1
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 347.1
+},
+{
+"text": "Injury/Illness-RightHip",
+"x0": 667.1,
+"x1": 764.2,
+"top": 370.1
+},
+{
+"text": "MiamiHeat",
+"x0": 265.2,
+"x1": 312.8,
+"top": 377.2
+},
+{
+"text": "Adebayo,Bam",
+"x0": 426.0,
+"x1": 484.8,
+"top": 377.2
+},
+{
+"text": "Probable",
+"x0": 586.7,
+"x1": 623.2,
+"top": 377.2
+},
+{
+"text": "Impingement",
+"x0": 667.1,
+"x1": 721.6,
+"top": 384.2
+},
+{
+"text": "Injury/Illness-RightHamstring",
+"x0": 667.1,
+"x1": 792.4,
+"top": 406.2
+},
+{
+"text": "Gardner,Myron",
+"x0": 426.0,
+"x1": 491.3,
+"top": 413.2
+},
+{
+"text": "Questionable",
+"x0": 586.7,
+"x1": 641.0,
+"top": 413.2
+},
+{
+"text": "Tightness/Soreness",
+"x0": 667.1,
+"x1": 750.3,
+"top": 420.3
+},
+{
+"text": "Goldin,Vladislav",
+"x0": 426.0,
+"x1": 493.2,
+"top": 442.3
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 442.3
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 442.3
+},
+{
+"text": "Jovic,Nikola",
+"x0": 426.0,
+"x1": 475.9,
+"top": 464.3
+},
+{
+"text": "Probable",
+"x0": 586.7,
+"x1": 623.2,
+"top": 464.3
+},
+{
+"text": "Injury/Illness-Illness",
+"x0": 667.1,
+"x1": 752.2,
+"top": 464.3
+},
+{
+"text": "Larsson,Pelle",
+"x0": 426.0,
+"x1": 481.2,
+"top": 486.4
+},
+{
+"text": "Available",
+"x0": 586.7,
+"x1": 623.7,
+"top": 486.4
+},
+{
+"text": "Injury/Illness-Illness",
+"x0": 667.1,
+"x1": 752.2,
+"top": 486.4
+},
+{
+"text": "Page2of7",
+"x0": 398.5,
+"x1": 443.4,
+"top": 538.1
+}
+]
+},
+{
+"width": 841.95,
+"words": [
+{
+"text": "Injury",
+"x0": 288.1,
+"x1": 348.5,
+"top": 45.5
+},
+{
+"text": "Report:",
+"x0": 354.6,
+"x1": 431.2,
+"top": 45.5
+},
+{
+"text": "11/18/26",
+"x0": 437.3,
+"x1": 532.7,
+"top": 45.5
+},
+{
+"text": "06:30",
+"x0": 538.8,
+"x1": 595.4,
+"top": 45.5
+},
+{
+"text": "AM",
+"x0": 601.5,
+"x1": 638.0,
+"top": 45.5
+},
+{
+"text": "Thompson,Klay",
+"x0": 426.0,
+"x1": 490.6,
+"top": 82.6
+},
+{
+"text": "Available",
+"x0": 586.7,
+"x1": 623.7,
+"top": 82.6
+},
+{
+"text": "Injury/Illness-LeftAnkleSprain",
+"x0": 667.1,
+"x1": 795.7,
+"top": 82.6
+},
+{
+"text": "Injury/Illness-LowBackStress",
+"x0": 667.1,
+"x1": 791.5,
+"top": 105.6
+},
+{
+"text": "PHI@ORL",
+"x0": 201.0,
+"x1": 240.0,
+"top": 112.7
+},
+{
+"text": "Philadelphia76ers",
+"x0": 265.2,
+"x1": 339.9,
+"top": 112.7
+},
+{
+"text": "Barlow,Dominick",
+"x0": 426.0,
+"x1": 497.2,
+"top": 112.7
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 112.7
+},
+{
+"text": "Reaction",
+"x0": 667.1,
+"x1": 702.6,
+"top": 119.7
+},
+{
+"text": "Bona,Adem",
+"x0": 426.0,
+"x1": 475.5,
+"top": 141.7
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 141.7
+},
+{
+"text": "Injury/Illness-CervicalSpineSprain",
+"x0": 667.1,
+"x1": 811.6,
+"top": 141.7
+},
+{
+"text": "Brown,Jaylen",
+"x0": 426.0,
+"x1": 482.3,
+"top": 163.8
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 163.8
+},
+{
+"text": "Injury/Illness-LeftHamstringStrain",
+"x0": 667.1,
+"x1": 813.0,
+"top": 163.8
+},
+{
+"text": "Injury/Illness-RightAchillesTendon",
+"x0": 667.1,
+"x1": 814.6,
+"top": 185.8
+},
+{
+"text": "Hukporti,Ariel",
+"x0": 426.0,
+"x1": 485.2,
+"top": 192.8
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 192.8
+},
+{
+"text": "Rupture/Tear",
+"x0": 667.1,
+"x1": 726.6,
+"top": 199.8
+},
+{
+"text": "Injury/Illness-RightHighAnkle",
+"x0": 667.1,
+"x1": 794.0,
+"top": 222.9
+},
+{
+"text": "OrlandoMagic",
+"x0": 265.2,
+"x1": 325.0,
+"top": 229.9
+},
+{
+"text": "Banchero,Paolo",
+"x0": 426.0,
+"x1": 492.2,
+"top": 229.9
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 229.9
+},
+{
+"text": "Sprain",
+"x0": 667.1,
+"x1": 692.7,
+"top": 236.9
+},
+{
+"text": "Injury/Illness-LeftKneeInjury",
+"x0": 667.1,
+"x1": 791.0,
+"top": 259.0
+},
+{
+"text": "Isaac,Jonathan",
+"x0": 426.0,
+"x1": 488.1,
+"top": 266.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 266.0
+},
+{
+"text": "Management",
+"x0": 667.1,
+"x1": 721.7,
+"top": 273.0
+},
+{
+"text": "Injury/Illness-LeftAnkleInjury",
+"x0": 667.1,
+"x1": 793.5,
+"top": 295.0
+},
+{
+"text": "Nelson,Izaiyah",
+"x0": 426.0,
+"x1": 487.0,
+"top": 302.0
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 302.0
+},
+{
+"text": "Recovery",
+"x0": 667.1,
+"x1": 704.4,
+"top": 309.1
+},
+{
+"text": "Injury/Illness-RightPartiallyTorn",
+"x0": 667.1,
+"x1": 804.5,
+"top": 331.1
+},
+{
+"text": "Penda,Noah",
+"x0": 426.0,
+"x1": 477.9,
+"top": 338.1
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 338.1
+},
+{
+"text": "Hamstring",
+"x0": 667.1,
+"x1": 709.0,
+"top": 345.1
+},
+{
+"text": "07:30(ET)",
+"x0": 120.6,
+"x1": 161.6,
+"top": 368.2
+},
+{
+"text": "CHI@BKN",
+"x0": 201.0,
+"x1": 241.0,
+"top": 368.2
+},
+{
+"text": "ChicagoBulls",
+"x0": 265.2,
+"x1": 318.6,
+"top": 368.2
+},
+{
+"text": "Awaka,Tobe",
+"x0": 426.0,
+"x1": 478.2,
+"top": 368.2
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 368.2
+},
+{
+"text": "Injury/Illness-DiscIrritation",
+"x0": 667.1,
+"x1": 782.0,
+"top": 368.2
+},
+{
+"text": "Robinson,Orlando",
+"x0": 426.0,
+"x1": 501.6,
+"top": 390.2
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 390.2
+},
+{
+"text": "GLeague-OnAssignment",
+"x0": 667.1,
+"x1": 773.6,
+"top": 390.2
+},
+{
+"text": "Sellers,Jaylin",
+"x0": 426.0,
+"x1": 479.6,
+"top": 412.3
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 412.3
+},
+{
+"text": "GLeague-Two-Way",
+"x0": 667.1,
+"x1": 750.7,
+"top": 412.3
+},
+{
+"text": "Injury/Illness-RightFinger",
+"x0": 667.1,
+"x1": 775.7,
+"top": 434.3
+},
+{
+"text": "Williams,Patrick",
+"x0": 426.0,
+"x1": 493.3,
+"top": 441.3
+},
+{
+"text": "Probable",
+"x0": 586.7,
+"x1": 623.2,
+"top": 441.3
+},
+{
+"text": "Dislocation",
+"x0": 667.1,
+"x1": 712.1,
+"top": 448.3
+},
+{
+"text": "Injury/Illness-RightMetacarpal",
+"x0": 667.1,
+"x1": 796.9,
+"top": 470.4
+},
+{
+"text": "Wilson,Caleb",
+"x0": 426.0,
+"x1": 481.3,
+"top": 477.4
+},
+{
+"text": "Out",
+"x0": 586.7,
+"x1": 601.9,
+"top": 477.4
+},
+{
+"text": "Fracture",
+"x0": 667.1,
+"x1": 701.2,
+"top": 484.4
+},
+{
+"text": "Page3of7",
+"x0": 398.5,
+"x1": 443.4,
+"top": 538.1
+}
+]
+}
+]
+}
