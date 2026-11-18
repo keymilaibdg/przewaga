@@ -80,6 +80,7 @@ def market_json(sport: str, mk: Market, event_id: str) -> dict[str, Any]:
                     key=lambda q: -q["price"],
                 ),
                 "modelProb": s.model_prob,
+                "rawModelProb": s.raw_model_prob,
                 "probLow": s.prob_low,
                 "probHigh": s.prob_high,
                 "fairProb": s.fair_prob,
@@ -215,9 +216,13 @@ def event_json(conn: sqlite3.Connection, ea: EventAnalysis, now: datetime) -> di
     elif not ea.known:
         flags.append("Za mało danych historycznych o jednej z drużyn — brak rekomendacji")
     if not ea.market_only:
-        waiting = [MARKET_NAME.get(m, m) for m in ("h2h", "totals", "spreads") if any(x.market == m for x in ea.markets) and not pp.can_recommend(m)]
+        waiting = [m for m in ("h2h", "totals", "spreads") if any(x.market == m for x in ea.markets) and not pp.can_recommend(m)]
         if waiting:
-            flags.append(f"Model w walidacji ({', '.join(waiting)}): backtest nie wykazał przewagi nad rynkiem — prognozy modelu są pokazywane, typy wyłączone")
+            names = ", ".join(MARKET_NAME.get(m, m) for m in waiting)
+            if all(pp.weight(m) == 0 for m in waiting):
+                flags.append(f"Backtest: rynek bez marży prognozuje lepiej niż model ({names}) — prognoza = rynek, typy wyłączone")
+            else:
+                flags.append(f"Model w walidacji ({names}): backtest nie wykazał przewagi nad rynkiem — typy wyłączone")
     if ev["sport"] == "football":
         flags.append("Brak xG w darmowym źródle — model oparty na bramkach")
     if absences is None:

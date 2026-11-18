@@ -260,10 +260,15 @@ def write_outputs(now: datetime, fb: dict, fb_params: dict[str, LeagueParams], n
             "xi": p.xi,
             "markets": {m: asdict(mp) for m, mp in p.markets.items()},
         }
-    cup_reason = "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+    cup_reason = "ratingi międzyligowe; brak darmowej historii kursów pucharowych — waga jak w ligach krajowych, walidacja na kursach zbieranych na bieżąco"
     for key in ("ucl", "uel"):
         if ratings:
-            leagues[key] = {"status": "validating", "reason": cup_reason, "markets": {m: asdict(MarketParams(0.5, 1.0, "validating", cup_reason)) for m in ("h2h", "totals")}}
+            mk = {}
+            for m in ("h2h", "totals"):
+                ws = sorted(p.markets[m].model_weight for p in fb_params.values() if m in p.markets)
+                w = ws[len(ws) // 2] if ws else 0.5
+                mk[m] = asdict(MarketParams(w, 1.0, "validating", cup_reason))
+            leagues[key] = {"status": "validating", "reason": cup_reason, "markets": mk}
     leagues["euroleague"] = {"status": "market_only", "reason": "brak darmowego źródła wyników Euroligi do modelu"}
     calib = {"generated_at": iso(now), "source": "python -m app.backtest run", "leagues": leagues}
     CALIBRATION_PATH.write_text(json.dumps(calib, ensure_ascii=False, indent=2), encoding="utf-8")

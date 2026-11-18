@@ -328,6 +328,7 @@ function MarketCard({ m, recIds }: { m: MarketAnalysis; recIds: string[] }) {
               <div className="tnum mt-1.5 flex items-center gap-2 text-[11px] text-fg-faint">
                 <span>
                   Model <b className="text-fg-muted">{fmtPct(s.modelProb)}</b>
+                  {s.rawModelProb !== undefined && Math.abs(s.rawModelProb - s.modelProb) >= 0.005 && <> (sam model {fmtPct(s.rawModelProb)})</>}
                 </span>
                 <span>Impl. {fmtPct(impliedProbability(best.price))}</span>
                 <span className={cn("ml-auto font-semibold", ev > 0 ? "text-pos" : "text-neg")}>EV {fmtSignedPct(ev)}</span>

@@ -292,6 +292,8 @@ def sync_recommendations(conn: sqlite3.Connection, a: EventAnalysis, now: dateti
 
 
 def withdraw_reason(a: EventAnalysis, row: sqlite3.Row) -> str:
+    if a.params is not None and not a.params.can_recommend(row["market"]):
+        return "Backtest walk-forward nie wykazał przewagi modelu nad rynkiem dla tego rynku — typy wyłączone (ETAP 5)."
     for mk in a.markets:
         for s in mk.selections:
             if mk.market == row["market"] and s.key == row["selection"] and s.line == row["line"] and s.best:

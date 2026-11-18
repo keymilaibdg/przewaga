@@ -94,6 +94,18 @@ _ALIASES = {
     "lech poznan": "lech",
     "rakow czestochowa": "rakow",
     "jagiellonia bialystok": "jagiellonia",
+    "internazionale milano": "inter",
+    "olympiakos piraeus": "olympiacos",
+    "vitoria sc": "guimaraes",
+    "vitoria guimaraes": "guimaraes",
+    "heart of midlothian": "hearts",
+    "djurgardens if": "djurgarden",
+    "djurgardens": "djurgarden",
+    "istanbul basaksehir": "buyuksehyr",
+    "basaksehir": "buyuksehyr",
+    "st patrick s athl": "st patricks",
+    "st patrick s athletic": "st patricks",
+    "adana demirspor": "ad demirspor",
 }
 
 
@@ -131,7 +143,7 @@ def similarity(a: str, b: str) -> float:
     if len(ta) == 1 and len(tb) == 1:
         return SequenceMatcher(None, na, nb).ratio()  # spelling variants: Olympiacos / Olympiakos
     short, long_ = (na.split(), nb.split()) if len(ta) <= len(tb) else (nb.split(), na.split())
-    if _abbrev_cover(short, long_):
+    if _abbrev_cover(short, long_) or (len(short) == len(long_) and _abbrev_cover(long_, short)):
         return 0.88
     return len(ta & tb) / len(ta | tb)
 
