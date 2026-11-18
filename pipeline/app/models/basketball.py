@@ -15,6 +15,10 @@ from scipy.stats import norm
 XI = 0.008  # per-day decay => half-life ~ 3 months (basketball form moves faster)
 
 
+def half_width_n(p: float, n: float) -> float:
+    return min(0.25, math.sqrt(max(p * (1 - p), 1e-4)) * 1.1 / math.sqrt(n + 5))
+
+
 @dataclass
 class Game:
     home: str
@@ -118,8 +122,7 @@ class Ratings:
         return float(1 - norm.cdf(line, loc=t, scale=self.sigma_t))
 
     def half_width(self, p: float, home: str, away: str) -> float:
-        n = min(self.n_eff.get(home, 0.0), self.n_eff.get(away, 0.0))
-        return min(0.25, math.sqrt(max(p * (1 - p), 1e-4)) * 1.1 / math.sqrt(n + 5))
+        return half_width_n(p, min(self.n_eff.get(home, 0.0), self.n_eff.get(away, 0.0)))
 
     def known(self, team: str) -> bool:
         return self.n_eff.get(team, 0.0) >= 3

@@ -25,7 +25,8 @@ class LeagueConfig:
     fixtures_source: str
     fdo_code: str | None = None  # football-data.org competition code
     csv_file: str | None = None  # football-data.co.uk history: 'E0' (per-season file) or 'new/POL' (all seasons)
-    # Cups and the Euroleague: too little shared history in free sources -> show odds, never recommend (ETAP 5).
+    # False: no league model from domestic history. Cups get cross-league ratings (models/cups.py) when
+    # app/cup_ratings.json exists; the Euroleague stays odds-only. Whether a league may recommend: app/params.py.
     recommend: bool = True
     # API-SPORTS lookup, used only by backtests on seasons 2022-2024 (the free plan has no current seasons).
     search: str = ""

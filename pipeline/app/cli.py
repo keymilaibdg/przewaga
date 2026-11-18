@@ -23,7 +23,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Callable
 
-from . import analysis, ingest, publish, teams
+from . import analysis, ingest, params, publish, teams
 from .config import (
     BDL_DAILY_LIMIT,
     CSV_DAILY_LIMIT,
@@ -185,16 +185,17 @@ class Pipeline:
     def analyse_and_publish(self, run_kind: str) -> dict[str, object]:
         now = self.clock()
         settled = analysis.settle(self.conn, now)
-        models = analysis.fit_models(self.conn, now)
+        league_params = params.load()
+        models = analysis.fit_models(self.conn, now, league_params)
         stats = {"new": 0, "updated": 0, "withdrawn": 0}
         analyses = []
         for ev in analysis.upcoming_events(self.conn, now):
-            a = analysis.analyse_event(self.conn, ev, models.get(ev["league_key"]), now)
+            a = analysis.analyse_event(self.conn, ev, models.get(ev["league_key"]), now, league_params.get(ev["league_key"]))
             for k, v in analysis.sync_recommendations(self.conn, a, now).items():
                 stats[k] += v
             analyses.append(a)
         configured = {"football-data-org": bool(self.fdo), "football-data-csv": True, "balldontlie": bool(self.bdl), "the-odds-api": bool(self.odds)}
-        written = publish.write_all(self.conn, analyses, now, PUBLISH_DIR, configured, run_kind)
+        written = publish.write_all(self.conn, analyses, now, PUBLISH_DIR, configured, run_kind, league_params)
         return {"settled": settled, **stats, **written}
 
     def run(self, kind: str) -> dict[str, object]:

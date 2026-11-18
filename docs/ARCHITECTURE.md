@@ -53,6 +53,8 @@ przewaga/
 │   ├── app/models/           Dixon–Coles (piłka), ratingi (koszykówka)
 │   ├── app/engine/           wycena rynków, EV, ocena jakości, ryzyko
 │   ├── app/analysis.py       cykl życia typów, wycofywanie, rozliczanie, CLV
+│   ├── app/params.py         parametry per liga z calibration.json (waga model/rynek, progi, status walidacji)
+│   ├── app/backtest/         ETAP 5: dane historyczne, walk-forward, kalibracja, raport (python -m app.backtest)
 │   ├── app/publish.py        eksport JSON dla aplikacji
 │   ├── app/cli.py            punkt wejścia (run --kind morning|afternoon, status)
 │   └── tests/                pytest + symulowane API (fake_api.py)
@@ -127,6 +129,14 @@ Klucze API: wyłącznie w GitHub Secrets (lokalnie: `pipeline/.env`, poza repozy
 
 **Ocena jakości sygnału (0–100)** — osobno od prawdopodobieństwa, ryzyka i EV:
 składowe: wielkość przewagi względem niepewności (edge / szerokość przedziału), kompletność i świeżość danych, historyczna kalibracja modelu na danym rynku/lidze, zgodność z ruchem kursu, płynność rynku. Progi: 90+ bardzo mocny, 80–89 mocny, 70–79 interesujący, 60–69 podwyższone ryzyko, < 60 brak rekomendacji.
+
+**Backtest i kalibracja (ETAP 5, `pipeline/app/backtest/`, wyniki: `docs/BACKTEST.md`)**
+- Walk-forward na historii: football-data.co.uk (wyniki + kursy Pinnacle / Betfair Exchange / maksimum i średnia rynku, sezony od 2019/20), archiwum kursów NBA (sportsbookreviewsonline, 2019/20–2022/23), puchary UEFA 2022–2024 z API-Football (plan Free). Model dopasowywany wyłącznie na danych sprzed chwili prognozy.
+- Na okresie strojenia dobierane są: zanik czasowy XI, waga model/rynek (minimum log-loss mieszanki), skala niepewności, progi min. EV i maks. rozbieżności. Okres testowy (piłka od 1.07.2025, NBA 2022/23) służy tylko do weryfikacji.
+- Wynik trafia do `pipeline/app/calibration.json` (per liga i rynek: waga, skala, progi, status). Pipeline dopuszcza typy wyłącznie na rynkach ze statusem `validated` — reguła walidacji jest stała i opisana w raporcie. Symulacja zakładów używa tego samego kodu (`engine.evaluate.price_market`) co przebieg dzienny.
+- Puchary: łączny model Poissona/Dixon–Coles na 21 ligach krajowych + meczach pucharowych (`models/cups.py`, `app/cup_ratings.json`, odświeżany co tydzień) — siły drużyn z różnych lig stają się porównywalne przez mecze pucharowe.
+- Harmonogram: pełny backtest 1. dnia miesiąca, ratingi pucharowe w poniedziałki (workflow „Backtest i kalibracja”).
+- Stan z 18.11.2026: na wszystkich rynkach optymalna waga modelu wyniosła 0 — rynek bez marży prognozuje lepiej niż model oparty tylko na wynikach. Typy są wyłączone, aplikacja pokazuje prognozę rynku i surowy model osobno.
 
 **Reguły twarde:** EV ≤ 0 → nigdy nie rekomenduj. Brak danych nie jest sygnałem pozytywnym — obniża ocenę. Brak wartościowych rynków → komunikat „Brak zakładów spełniających obecnie kryteria jakości…”.
 

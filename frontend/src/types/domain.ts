@@ -67,8 +67,10 @@ export interface SelectionAnalysis {
   label: string;
   line: number | null;
   quotes: OddsQuote[];
-  /** Model probability and its uncertainty interval. */
+  /** Final probability (model blended with the margin-free market, weight from the backtest) and its interval. */
   modelProb: number;
+  /** The model alone, before blending with the market (pipeline >= ETAP 5). */
+  rawModelProb?: number;
   probLow: number;
   probHigh: number;
   /** Margin-free market probability (de-vigged best-available book). */
@@ -277,6 +279,19 @@ export interface UserSettings {
   /** Tax deducted from the stake by the user's bookmaker (Poland: 0.12; tax-free promo: 0). */
   stakeTax: number;
   dailyLimitUnits: number;
+}
+
+/** Per competition: may the model recommend? Decided by the walk-forward backtest (ETAP 5). */
+export interface ModelStatus {
+  league: string;
+  name: string;
+  sport: Sport;
+  status: "validated" | "validating" | "market_only";
+  statusLabel: string;
+  reason: string;
+  minEv: number;
+  calibratedAt: string | null;
+  markets: { market: string; name: string; status: ModelStatus["status"]; statusLabel: string; modelWeight: number; reason: string }[];
 }
 
 export interface ProviderHealth {

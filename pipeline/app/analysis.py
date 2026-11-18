@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from .config import HORIZON_DAYS, LEAGUE_BY_KEY, MAX_ODDS_AGE_H, previous_season, season_for
+from .params import LeagueParams, default_params
 from .db import dumps
 from .engine.evaluate import Candidate, Context, Market, Quote, Selection, fmt_pct, price_market
 from .engine.odds import closing_line_value
@@ -13,7 +14,7 @@ from .models.basketball import Game, Ratings
 from .models.football import DixonColes, Match, outcome_probs, total_over
 from .providers.http import iso
 
-MODEL_VERSION = {"football": "dixon-coles-v0", "basketball": "ratings-v0"}
+MODEL_VERSION = {"football": "dixon-coles-v1", "basketball": "ratings-v1"}
 
 
 def parse(ts: str) -> datetime:
@@ -30,12 +31,24 @@ def signed(x: float) -> str:
 
 # ---------------- models ----------------
 
-def fit_models(conn: sqlite3.Connection, now: datetime) -> dict[str, DixonColes | Ratings]:
-    """One model per league that may recommend, fitted on the current and the previous season."""
+def fit_models(conn: sqlite3.Connection, now: datetime, params: dict[str, LeagueParams] | None = None) -> dict[str, DixonColes | Ratings]:
+    """One model per league with a domestic history, fitted on the current and the previous season.
+
+    Cups (Champions League, Europa League) get a model from the cross-league ratings (app/cup_ratings.json,
+    see models/cups.py) when the file exists. Euroleague: odds only.
+    """
+    params = params or {}
     models: dict[str, DixonColes | Ratings] = {}
     for key, lg in LEAGUE_BY_KEY.items():
+        pp = params.get(key) or default_params(key)
         if not lg.recommend:
-            continue  # cups / Euroleague: odds only (see analyse_event)
+            if pp.has_model and lg.sport == "football":
+                from .models.cups import cup_model
+
+                m = cup_model(conn, key, now)
+                if m is not None:
+                    models[key] = m
+            continue
         cur = season_for(lg.sport, now)
         seasons = (cur, previous_season(lg.sport, cur))
         rows = conn.execute(
@@ -47,10 +60,11 @@ def fit_models(conn: sqlite3.Connection, now: datetime) -> dict[str, DixonColes 
         if not rows:
             continue
         age = lambda r: (now - parse(r["kickoff"])).total_seconds() / 86400  # noqa: E731
+        xi = {"xi": pp.xi} if pp.xi else {}
         if lg.sport == "football":
-            models[key] = DixonColes.fit([Match(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows])
+            models[key] = DixonColes.fit([Match(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows], **xi)
         else:
-            models[key] = Ratings.fit([Game(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows])
+            models[key] = Ratings.fit([Game(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows], **xi)
     return models
 
 
@@ -88,20 +102,22 @@ class EventAnalysis:
     completeness: float = 0.0
     known: bool = False
     market_only: bool = False  # no model for this competition: odds are shown, nothing is recommended
+    params: LeagueParams | None = None
 
 
 MARKET_ONLY_VERDICT = "Brak modelu dla tych rozgrywek — pokazujemy tylko kursy rynku (prawdopodobieństwo = rynek bez marży)."
 
 
-def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes | Ratings | None, now: datetime) -> EventAnalysis:
-    a = EventAnalysis(event=ev)
+def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes | Ratings | None, now: datetime, params: LeagueParams | None = None) -> EventAnalysis:
+    pp = params or default_params(ev["league_key"])
+    a = EventAnalysis(event=ev, params=pp)
     h, w = ev["home_team_id"], ev["away_team_id"]
     hn, an = ev["home_name"], ev["away_name"]
     quotes, history = latest_quotes(conn, ev["id"])
     times = [q.captured_at for qs in quotes.values() for q in qs]
     a.odds_updated = max(times) if times else None
     a.odds_fresh = bool(a.odds_updated and now - a.odds_updated <= timedelta(hours=MAX_ODDS_AGE_H))
-    if model is None or not LEAGUE_BY_KEY[ev["league_key"]].recommend:
+    if model is None or not pp.has_model:
         return market_only(a, quotes, history, now)
     a.known = model.known(h) and model.known(w)
     injuries_fetched = conn.execute("SELECT 1 FROM injuries WHERE league_key = ? AND fetched_at >= ? LIMIT 1", (ev["league_key"], iso(now - timedelta(hours=36)))).fetchone() is not None
@@ -113,7 +129,7 @@ def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes |
         + 0.1,  # fixtures/results always present when we get here
         3,
     )
-    ctx = Context(now=now, kickoff=parse(ev["kickoff"]), completeness=a.completeness, both_teams_known=a.known)
+    ctx = Context(now=now, kickoff=parse(ev["kickoff"]), completeness=a.completeness, both_teams_known=a.known, params=pp)
     is_fb = ev["sport"] == "football"
 
     def sel(key: str, label: str, line: float | None, p: float, mkey: str) -> Selection:
@@ -276,6 +292,8 @@ def sync_recommendations(conn: sqlite3.Connection, a: EventAnalysis, now: dateti
 
 
 def withdraw_reason(a: EventAnalysis, row: sqlite3.Row) -> str:
+    if a.params is not None and not a.params.can_recommend(row["market"]):
+        return "Backtest walk-forward nie wykazał przewagi modelu nad rynkiem dla tego rynku — typy wyłączone (ETAP 5)."
     for mk in a.markets:
         for s in mk.selections:
             if mk.market == row["market"] and s.key == row["selection"] and s.line == row["line"] and s.best:
