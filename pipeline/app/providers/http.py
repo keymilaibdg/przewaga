@@ -36,6 +36,9 @@ class UrllibTransport:
     def __init__(self, timeout: float = 30.0) -> None:
         self.timeout = timeout
 
+    def get_raw(self, url: str) -> tuple[int, bytes]:
+        return get_raw(url, self.timeout)
+
     def get(self, url: str, headers: dict[str, str]) -> HttpResponse:
         req = urllib.request.Request(url, headers={"Accept": "application/json, text/csv;q=0.9, */*;q=0.5", "User-Agent": "przewaga/0.4", **headers})
         try:
@@ -49,6 +52,18 @@ class UrllibTransport:
             except Exception:  # noqa: BLE001 - provider returned non-JSON error page
                 body = None
             return HttpResponse(e.code, {k.lower(): v for k, v in (e.headers or {}).items()}, body)
+
+
+def get_raw(url: str, timeout: float = 30.0) -> tuple[int, bytes]:
+    """Plain download (binary files such as PDF). Returns (HTTP status, body); network errors -> (-1, b'')."""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (przewaga)"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, b""
+    except Exception:  # noqa: BLE001 - offline / DNS / timeout
+        return -1, b""
 
 
 def decode_body(raw: bytes, content_type: str) -> Any:

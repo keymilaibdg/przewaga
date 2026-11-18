@@ -78,6 +78,17 @@ CREATE TABLE IF NOT EXISTS injuries (
     UNIQUE(team_id, player, fixture_event_id)
 );
 
+-- ClubElo ratings (latest download only; replaced on every fetch)
+CREATE TABLE IF NOT EXISTS clubelo (
+    club TEXT NOT NULL,
+    country TEXT NOT NULL,
+    level INTEGER,
+    elo REAL NOT NULL,
+    rank INTEGER,
+    as_of TEXT NOT NULL,
+    PRIMARY KEY (club, country)
+);
+
 CREATE TABLE IF NOT EXISTS recommendations (
     id TEXT PRIMARY KEY,              -- '<event_id>:<market>:<selection>:<line>'
     event_id TEXT NOT NULL REFERENCES events(id),

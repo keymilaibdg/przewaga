@@ -187,6 +187,33 @@ def factors(conn: sqlite3.Connection, a: EventAnalysis, model: DixonColes | Rati
         out.append(factor("h2h", "Bezpośrednie mecze (ostatnie 5)", str(hh), str(ha), "home" if hh > ha else "away" if ha > hh else "none",
                           f"Remisy: {hd2}. Mała próba, często sprzed zmian w składach — rynek przywiązuje do tego niewielką wagę." if is_fb else "Mała próba — rynek przywiązuje do tego niewielką wagę."))
 
+    if ev["sport"] == "basketball":
+        inj = conn.execute(
+            """SELECT team_id, player, kind FROM injuries WHERE league_key = 'nba' AND fixture_event_id = ?
+               AND kind IN ('Out', 'Doubtful', 'Questionable') AND (reason IS NULL OR reason NOT LIKE 'G League%')""",
+            (ev["id"],),
+        ).fetchall()
+        reported = conn.execute("SELECT 1 FROM injuries WHERE league_key = 'nba' LIMIT 1").fetchone()
+        if reported:
+            def who(tid: str) -> tuple[str, int]:
+                out = [r["player"] for r in inj if r["team_id"] == tid and r["kind"] == "Out"]
+                unsure = [r["player"] for r in inj if r["team_id"] == tid and r["kind"] != "Out"]
+                txt = (f"nie zagra: {len(out)}" + (f" ({', '.join(out[:3])}{'…' if len(out) > 3 else ''})" if out else "")) + (f"; niepewni: {len(unsure)}" if unsure else "")
+                return txt, len(out)
+
+            th, nh = who(h)
+            ta, na = who(w)
+            out.append(factor("injuries", "Nieobecni (oficjalny raport NBA)", th, ta, "home" if na > nh + 1 else "away" if nh > na + 1 else "none",
+                              "Bez wagi zawodników: brak lidera znaczy dużo więcej niż brak rezerwowego. Rynek zna wagę — jeśli kurs mocno się ruszył, to często przez tę listę."))
+            facts["injuries"] = (nh, na)
+
+    if ev["sport"] == "football":
+        eh, ea_ = clubelo_rating(conn, h, ev["home_name"], ev["league_key"]), clubelo_rating(conn, w, ev["away_name"], ev["league_key"])
+        if eh and ea_:
+            out.append(factor("clubelo", "ClubElo (niezależny ranking)", f"{eh[0]:.0f}" + (f" ({eh[1]}. w Europie)" if eh[1] else ""), f"{ea_[0]:.0f}" + (f" ({ea_[1]}. w Europie)" if ea_[1] else ""),
+                              "home" if eh[0] > ea_[0] + 25 else "away" if ea_[0] > eh[0] + 25 else "none",
+                              f"Różnica {eh[0] - ea_[0]:+.0f} pkt Elo. Ranking clubelo.com liczony z wyników wszystkich klubów Europy — drugie, niezależne zdanie obok naszego modelu."))
+
     if a.schedule:
         c = a.schedule
 
@@ -213,6 +240,23 @@ def factors(conn: sqlite3.Connection, a: EventAnalysis, model: DixonColes | Rati
             out.append(factor("rest", "Dni od ostatniego meczu", f"{pl(dh_, 0)}", f"{pl(da_, 0)}", "home" if dh_ > da_ + 1 else "away" if da_ > dh_ + 1 else "none",
                               "Mecz w środku tygodnia (puchary) przed spotkaniem oznacza mniej odpoczynku i częstszą rotację składu."))
     return out, facts
+
+
+def clubelo_rating(conn: sqlite3.Connection, team_id: str, name: str, league: str) -> tuple[float, int | None] | None:
+    """(Elo, rank) of a team from the latest ClubElo download, matched by name (within the country for domestic leagues)."""
+    from .matching import similarity
+    from .providers.clubelo import LEAGUE_COUNTRY
+
+    country = LEAGUE_COUNTRY.get(league)
+    rows = conn.execute("SELECT club, country, elo, rank FROM clubelo" + (" WHERE country = ?" if country else ""), ((country,) if country else ())).fetchall()
+    if not rows:
+        return None
+    names = {name} | {r["name"] for r in conn.execute("SELECT name FROM team_aliases WHERE team_id = ?", (team_id,))}
+    scored = sorted(((max(similarity(n, r["club"]) for n in names), r) for r in rows), key=lambda x: -x[0])
+    if not scored or scored[0][0] < 0.85 or (len(scored) > 1 and scored[1][0] >= scored[0][0]):
+        return None
+    r = scored[0][1]
+    return float(r["elo"]), r["rank"]
 
 
 # ---------------- per-selection numbers ----------------

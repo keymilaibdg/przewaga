@@ -25,6 +25,7 @@ from typing import Callable
 
 from . import analysis, ingest, insight, params, publish, teams
 from .config import (
+    LEAGUE_BY_KEY,
     BDL_DAILY_LIMIT,
     CSV_DAILY_LIMIT,
     DB_PATH,
@@ -39,7 +40,7 @@ from .config import (
     season_for,
 )
 from .db import connect, dumps
-from .providers import balldontlie, fd_csv, football_data_org
+from .providers import balldontlie, clubelo, fd_csv, football_data_org, nba_injuries
 from .providers.balldontlie import Balldontlie
 from .providers.fd_csv import FootballDataCsv
 from .providers.football_data_org import FootballDataOrg
@@ -58,10 +59,20 @@ ENV_KEYS = {"fdo": "FOOTBALL_DATA_KEY", "bdl": "BALLDONTLIE_KEY", "odds": "ODDS_
 
 
 class Pipeline:
-    def __init__(self, conn: sqlite3.Connection, transport: Transport, keys: dict[str, str | None], clock: Callable[[], datetime] = utcnow, sleep: Callable[[float], None] | None = None) -> None:
+    def __init__(
+        self,
+        conn: sqlite3.Connection,
+        transport: Transport,
+        keys: dict[str, str | None],
+        clock: Callable[[], datetime] = utcnow,
+        sleep: Callable[[float], None] | None = None,
+        injury_parser: Callable[[bytes], list] | None = None,
+    ) -> None:
         self.conn = conn
         self.clock = clock
         self.keys = keys
+        self.transport = transport
+        self.injury_parser = injury_parser or nba_injuries.parse_pdf
         self.errors: list[str] = []
         extra = {"sleep": sleep} if sleep else {}
         daily = lambda p, n: api_sports_budget(conn, p, n, 0, clock)  # noqa: E731 - daily request counter
@@ -69,6 +80,7 @@ class Pipeline:
         self.fdo = FootballDataOrg(ApiClient("football-data-org", football_data_org.BASE, {"X-Auth-Token": fk or ""}, conn, transport, daily("football-data-org", FDO_DAILY_LIMIT), clock=clock, **extra)) if fk else None
         self.csv = FootballDataCsv(ApiClient("football-data-csv", fd_csv.BASE, {}, conn, transport, daily("football-data-csv", CSV_DAILY_LIMIT), clock=clock, **extra))
         self.bdl = Balldontlie(ApiClient("balldontlie", balldontlie.BASE, {"Authorization": bk or ""}, conn, transport, daily("balldontlie", BDL_DAILY_LIMIT), clock=clock, **extra)) if bk else None
+        self.elo = ApiClient("clubelo", clubelo.BASE, {}, conn, transport, daily("clubelo", 4), clock=clock, **extra)
         self.odds = OddsApi(ApiClient("the-odds-api", ODDS_BASE, {"apiKey": ok or ""}, conn, transport, odds_budget(conn, ODDS_MONTHLY_CREDITS, clock), auth_in_query=True, clock=clock, **extra)) if ok else None
 
     # ---- helpers ----
@@ -182,6 +194,55 @@ class Pipeline:
                     self.errors.append(f"uwaga (kursy {lg.key}): {res['unmatched']} meczów z kursami bez pary w terminarzu")
         return out
 
+    def fetch_nba_injuries(self) -> int:
+        """Newest official NBA injury report -> injuries table (snapshot: replaces the previous one)."""
+        raw = getattr(self.transport, "get_raw", None)
+        now = self.clock()
+        if raw is None or not self._events_between(LEAGUE_BY_KEY["nba"], now - timedelta(hours=3), now + timedelta(hours=36)):
+            return 0
+        tries = 0
+
+        def get(url: str) -> tuple[int, bytes]:
+            nonlocal tries
+            tries += 1
+            return raw(url)
+
+        found = nba_injuries.latest(now, get)
+        url = found[0] if found else nba_injuries.BASE
+        self.conn.execute(
+            "INSERT INTO provider_calls(provider, endpoint, http_status, ok, error, cost, called_at) VALUES (?,?,?,?,?,?,?)",
+            ("nba-injury-report", url.rsplit("/", 1)[-1], 200 if found else 404, int(bool(found)), None if found else "brak raportu w ostatnich 12 h", tries, iso(now)),
+        )
+        self.conn.commit()
+        if not found:
+            self.errors.append("uwaga (raport kontuzji NBA): nie znaleziono raportu z ostatnich 12 godzin")
+            return 0
+        try:
+            entries = self.injury_parser(found[1])
+        except Exception as e:  # noqa: BLE001 - a changed PDF layout must not stop the run
+            self.errors.append(f"uwaga (raport kontuzji NBA): nie udało się odczytać PDF: {type(e).__name__}: {e}")
+            return 0
+        return ingest.store_nba_injuries(self.conn, entries, now)
+
+    def fetch_clubelo(self) -> int:
+        now = self.clock()
+        try:
+            body = self.elo.get(now.strftime("%Y-%m-%d")).body
+        except (ProviderError, BudgetExceeded) as e:
+            self.errors.append(f"uwaga (ClubElo): {e}")
+            return 0
+        rows = clubelo.parse(body) if isinstance(body, str) else []
+        if not rows:
+            self.errors.append("uwaga (ClubElo): pusta odpowiedź")
+            return 0
+        self.conn.execute("DELETE FROM clubelo")
+        self.conn.executemany(
+            "INSERT OR REPLACE INTO clubelo(club, country, level, elo, rank, as_of) VALUES (?,?,?,?,?,?)",
+            [(r.club, r.country, r.level, r.elo, r.rank, iso(now)) for r in rows],
+        )
+        self.conn.commit()
+        return len(rows)
+
     def analyse_and_publish(self, run_kind: str) -> dict[str, object]:
         now = self.clock()
         settled = analysis.settle(self.conn, now)
@@ -200,7 +261,7 @@ class Pipeline:
             for k, v in analysis.sync_recommendations(self.conn, a, now).items():
                 stats[k] += v
             analyses.append(a)
-        configured = {"football-data-org": bool(self.fdo), "football-data-csv": True, "balldontlie": bool(self.bdl), "the-odds-api": bool(self.odds)}
+        configured = {"football-data-org": bool(self.fdo), "football-data-csv": True, "balldontlie": bool(self.bdl), "the-odds-api": bool(self.odds), "nba-injury-report": True, "clubelo": True}
         written = publish.write_all(self.conn, analyses, now, PUBLISH_DIR, configured, run_kind, league_params)
         return {"settled": settled, **stats, **written}
 
@@ -216,6 +277,7 @@ class Pipeline:
             fixtures["the-odds-api"] = self.fetch_odds_events()
             scores = self.fetch_scores()
             odds = self.fetch_odds(horizon_h=36)
+            extra = {"clubelo": self.fetch_clubelo(), "nba_injuries": self.fetch_nba_injuries()}
         else:
             today = [lg for lg in LEAGUES if self._events_between(lg, started - timedelta(hours=14), started + timedelta(hours=12))]
             fixtures = {"football-data.org": self.fetch_fdo(today)}
@@ -223,8 +285,9 @@ class Pipeline:
                 fixtures["balldontlie"] = self.fetch_bdl(incremental_only=True)
             history, scores = 0, {}
             odds = self.fetch_odds(horizon_h=10)
+            extra = {"nba_injuries": self.fetch_nba_injuries()}
         result = self.analyse_and_publish(kind)
-        summary = {"fixtures": fixtures, "csv_history": history, "teams_merged": merged, "scores": scores, "odds_matched": odds, **result, "errors": self.errors}
+        summary = {"fixtures": fixtures, "csv_history": history, "teams_merged": merged, "scores": scores, "odds_matched": odds, **extra, **result, "errors": self.errors}
         critical = [e for e in self.errors if not e.startswith("uwaga")]
         self.conn.execute("UPDATE runs SET finished_at = ?, ok = ?, summary = ? WHERE id = ?", (iso(self.clock()), int(not critical), dumps(summary), run_id))
         self.conn.commit()

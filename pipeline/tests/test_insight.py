@@ -120,3 +120,52 @@ def test_pipeline_publishes_price_insight(tmp_path, monkeypatch) -> None:
             assert any(s["history"] and s["history"]["n"] == 500 for s in pi["selections"])
         if e["league"]["id"] == "nba":
             assert any(f["key"] == "fatigue" for f in pi["factors"])
+
+
+def test_nba_injury_report_parsed_from_real_layout() -> None:
+    """Words of a real report (2026-11-18 06:45 ET), as pdfplumber extracts them."""
+    from pathlib import Path
+
+    from app.providers.nba_injuries import candidate_urls, display_name, parse_words
+
+    d = json.loads((Path(__file__).parent / "data" / "nba_injury_words.json").read_text())
+    es = parse_words([p["words"] for p in d["pages"]])
+    by = {e.player: e for e in es}
+    assert len(es) == 44
+    assert by["Clint Capela"].team == "Houston Rockets" and by["Clint Capela"].status == "Out" and by["Clint Capela"].matchup == "HOU@IND"
+    assert by["Johnny Furphy"].team == "Indiana Pacers" and by["Johnny Furphy"].reason == "Injury/Illness - Right ACL Repair / Surgery"  # wrapped above and below
+    assert by["Andrew Nembhard"].reason == "Injury/Illness - Left Hip Soreness / Tightness"
+    assert by["Sam Merrill"].team == "Cleveland Cavaliers" and by["Sam Merrill"].reason.endswith("Injury Management")  # continues on the next page
+    assert by["Tobe Awaka"].matchup == "CHI@BKN" and by["Scotty Pippen Jr."].status == "Out"
+    assert display_name("Udeh, Jr., Ernest") == "Ernest Udeh Jr."
+    urls = list(candidate_urls(datetime(2026, 11, 18, 12, 50, tzinfo=timezone.utc), 3))
+    assert urls[0].endswith("Injury-Report_2026-11-18_07_45AM.pdf") and urls[1].endswith("07_30AM.pdf")
+
+
+def test_injuries_and_clubelo_in_pipeline(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(cli, "PUBLISH_DIR", tmp_path / "data")
+    conn = connect(tmp_path / "db.sqlite3")
+    world = FakeWorld(now=NOW, serve_injuries=True)
+    s = Pipeline(conn, world, KEYS, clock=lambda: NOW, sleep=NO_SLEEP, injury_parser=world.parse_injury_pdf).run("morning")
+    assert s["nba_injuries"] == 3 and s["clubelo"] == 12
+    events = load(tmp_path / "data", "events.json")
+    nba = [e for e in events if e["league"]["id"] == "nba" and e["absences"]]
+    assert len(nba) == 1
+    ab = nba[0]["absences"]
+    assert {a["player"] for a in ab} == {"Star Player", "Bench Guy"}  # G League assignment filtered out
+    assert {a["reason"] for a in ab} == {"injury", "doubtful"}
+    if nba[0]["priceInsight"]:
+        assert any(f["key"] == "injuries" for f in nba[0]["priceInsight"]["factors"])
+    epl = [e for e in events if e["league"]["id"] == "epl" and e["priceInsight"]]
+    assert epl and all(any(f["key"] == "clubelo" for f in e["priceInsight"]["factors"]) for e in epl)
+    meta = load(tmp_path / "data", "meta.json")
+    st = {p["id"]: p["status"] for p in meta["providers"]}
+    assert st["nba-injury-report"] == "connected" and st["clubelo"] == "connected"
+
+
+def test_clubelo_down_is_not_critical(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(cli, "PUBLISH_DIR", tmp_path / "data")
+    conn = connect(tmp_path / "db.sqlite3")
+    s = Pipeline(conn, FakeWorld(now=NOW, clubelo_down=True), KEYS, clock=lambda: NOW, sleep=NO_SLEEP).run("morning")
+    assert s["clubelo"] == 0 and any(e.startswith("uwaga (ClubElo)") for e in s["errors"])
+    assert all(e.startswith("uwaga") for e in s["errors"] if "ClubElo" in e)  # warning only, never a failed run

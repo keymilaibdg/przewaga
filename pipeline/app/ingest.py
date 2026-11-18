@@ -233,3 +233,41 @@ def short_name(name: str) -> str:
     if len(words) >= 3:
         return "".join(w[0] for w in words[:3]).upper()
     return (words[0][0] + words[1][:2]).upper()
+
+
+def store_nba_injuries(conn: sqlite3.Connection, entries: list, now: datetime) -> int:
+    """Official NBA injury report -> injuries (league 'nba'), linked to the team and to its game on that date."""
+    from zoneinfo import ZoneInfo
+
+    from .models.schedule import nba_abbr
+
+    et = ZoneInfo("America/New_York")
+    rows = conn.execute(
+        """SELECT e.id, e.kickoff, e.home_team_id, e.away_team_id, h.name AS hn, w.name AS an FROM events e
+           JOIN teams h ON h.id = e.home_team_id JOIN teams w ON w.id = e.away_team_id
+           WHERE e.league_key = 'nba' AND e.kickoff BETWEEN ? AND ?""",
+        (iso(now - timedelta(days=1)), iso(now + timedelta(days=3))),
+    ).fetchall()
+    team_ids: dict[str, str] = {}
+    games: dict[tuple[str, str], str] = {}
+    for r in rows:
+        day = datetime.fromisoformat(r["kickoff"].replace("Z", "+00:00")).astimezone(et).strftime("%m/%d/%Y")
+        for tid, name in ((r["home_team_id"], r["hn"]), (r["away_team_id"], r["an"])):
+            ab = nba_abbr(name)
+            if ab:
+                team_ids[ab] = tid
+                games[(ab, day)] = r["id"]
+    conn.execute("DELETE FROM injuries WHERE league_key = 'nba'")
+    n = 0
+    for e in entries:
+        ab = nba_abbr(e.team)
+        tid = team_ids.get(ab or "")
+        if tid is None:
+            continue
+        conn.execute(
+            "INSERT OR REPLACE INTO injuries(league_key, team_id, player, kind, reason, fixture_event_id, fetched_at) VALUES ('nba',?,?,?,?,?,?)",
+            (tid, e.player, e.status, e.reason, games.get((ab, e.game_date)), iso(now)),
+        )
+        n += 1
+    conn.commit()
+    return n

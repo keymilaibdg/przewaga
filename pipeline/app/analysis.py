@@ -262,7 +262,10 @@ def reasons(conn: sqlite3.Connection, a: EventAnalysis, c: Candidate) -> tuple[l
     if ev["sport"] == "football" and inj:
         con.append(f"Zgłoszone absencje ({inj}) nie są jeszcze ilościowo uwzględniane w modelu v0")
     if ev["sport"] == "basketball":
-        con.append("Brak danych o kontuzjach w darmowym źródle — sprawdź raport kontuzji przed meczem")
+        out = conn.execute(
+            "SELECT COUNT(*) AS n FROM injuries WHERE fixture_event_id = ? AND kind IN ('Out', 'Doubtful', 'Questionable') AND reason NOT LIKE 'G League%'", (ev["id"],)
+        ).fetchone()["n"]
+        con.append(f"Raport kontuzji NBA: {out} zawodników nie zagra lub jest niepewnych — model nie zna ich wagi" if out else "Sprawdź raport kontuzji NBA przed meczem — model nie uwzględnia nieobecności")
     if c.best.price > 2.6:
         con.append("Wysoki kurs = duża wariancja wyniku pojedynczego zakładu")
     return pro, con

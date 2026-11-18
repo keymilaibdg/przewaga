@@ -43,6 +43,8 @@ class FakeWorld:
     odds_skew: float = 0.06  # how much the fake market disagrees with the true model
     calls: list[str] = field(default_factory=list)
     odds_remaining: int = 500
+    serve_injuries: bool = False  # official NBA injury report (binary PDF via get_raw)
+    clubelo_down: bool = False
 
     def __post_init__(self) -> None:
         rng = random.Random(self.seed)
@@ -114,7 +116,35 @@ class FakeWorld:
             return self._bdl(q)
         if "the-odds-api.com" in u.netloc:
             return self._odds(path, q)
+        if u.netloc == "api.clubelo.com":
+            if self.clubelo_down:
+                return HttpResponse(502, {"content-type": "text/html"}, "<html>Bad Gateway</html>")
+            rows = ["Rank,Club,Country,Level,Elo,From,To"] + [
+                f"{i + 1},{CSV_NAMES.get(t[1], t[1])},ENG,1,{1500 + 300 * (t[2] - t[3]):.1f},2026-11-01,2026-11-30" for i, t in enumerate(FB_TEAMS)
+            ] + ["99,Roma,ITA,1,1780.0,2026-11-01,2026-11-30", "120,Porto,POR,1,1750.0,2026-11-01,2026-11-30"]
+            return HttpResponse(200, {"content-type": "text/csv"}, "\n".join(rows) + "\n")
         return HttpResponse(404, {}, {"message": "not found"})
+
+    # ---- official NBA injury report (binary) ----
+    def get_raw(self, url: str) -> tuple[int, bytes]:
+        self.calls.append(url)
+        if not self.serve_injuries or "Injury-Report_" not in url:
+            return 404, b""
+        return 200, b"%PDF-fake"
+
+    def parse_injury_pdf(self, body: bytes):  # noqa: ANN201 - test double for nba_injuries.parse_pdf
+        from app.providers.nba_injuries import InjuryEntry
+
+        et = self.now.astimezone(ZoneInfo("America/New_York"))
+        games = sorted((g for g in self.games if g["ko"] > self.now), key=lambda g: g["ko"])[:1]
+        out = []
+        for g in games:
+            d = g["ko"].astimezone(ZoneInfo("America/New_York")).strftime("%m/%d/%Y")
+            out.append(InjuryEntry(d, "X@Y", g["h"][1], "Star Player", "Out", "Injury/Illness - Left Knee Sprain"))
+            out.append(InjuryEntry(d, "X@Y", g["a"][1], "Bench Guy", "Questionable", "Injury/Illness - Illness"))
+            out.append(InjuryEntry(d, "X@Y", g["a"][1], "Two Way", "Out", "G League - Two-Way"))
+        _ = et
+        return out
 
     def _fdo(self, path: str) -> HttpResponse:
         hdr = {"x-requests-available-minute": "9"}

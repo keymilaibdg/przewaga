@@ -81,7 +81,8 @@ def test_morning_run_end_to_end(env):
     meta = load(out, "meta.json")
     assert meta["origin"] == "live" and meta["bookmakers"].get("pinnacle") == "Pinnacle"
     status = {p["id"]: p["status"] for p in meta["providers"]}
-    assert status == {"football-data-org": "connected", "football-data-csv": "connected", "balldontlie": "connected", "the-odds-api": "connected", "pl-books": "unverified"}
+    assert status == {"football-data-org": "connected", "football-data-csv": "connected", "balldontlie": "connected", "the-odds-api": "connected", "pl-books": "unverified",
+                      "clubelo": "connected", "nba-injury-report": "error"}  # the fake world serves no injury PDF by default
 
 
 def test_recommendations_lifecycle_settlement_and_history(env):
@@ -139,7 +140,7 @@ def test_missing_keys_still_publishes(tmp_path, monkeypatch):
     assert s["events"] == 0, "the CSV (no key needed) brings history only"
     meta = load(out, "meta.json")
     status = {p["id"]: p["status"] for p in meta["providers"]}
-    assert status.pop("football-data-csv") == "connected"
+    assert status.pop("football-data-csv") == "connected" and status.pop("clubelo") == "connected"  # no key needed
     assert all(v in ("not_configured", "unverified") for v in status.values())
 
 
