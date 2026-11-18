@@ -7,7 +7,24 @@
     "allowMixedContent": false
   },
   "plugins": {
-    "CapacitorHttp": { "enabled": true },
-    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#060912", "showSpinner": false }
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#060912",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "iconColor": "#2fd6ea"
+    },
+    "BackgroundRunner": {
+      "label": "pl.przewaga.check",
+      "src": "runners/background.js",
+      "event": "checkData",
+      "repeat": true,
+      "interval": 120,
+      "autoStart": true
+    }
   }
 }

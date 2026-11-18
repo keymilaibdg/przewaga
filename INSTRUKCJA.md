@@ -60,6 +60,8 @@ Wyślij mu link `github.com/TWOJA-NAZWA/przewaga/releases/latest` (np. Messenger
 - **07:17** (i opcjonalnie **15:47**, jeśli pozwala limit kursów) GitHub sam pobiera dane, liczy modele i publikuje analizy. Aplikacja pobiera je przy otwarciu.
 - Bez internetu aplikacja pokazuje ostatnie pobrane dane z oznaczeniem „Offline”.
 - **Backtest i kalibracja** (workflow „Backtest i kalibracja”): 1. dnia miesiąca GitHub sam sprawdza model na historii i ustala, w których ligach wolno mu dawać typy; w poniedziałki odświeża ratingi drużyn pucharowych. Wynik: **Statystyki → Backtest** w aplikacji i plik `docs/BACKTEST.md`. Nic nie trzeba klikać.
+- **Powiadomienia (od v0.5):** w **Profilu → Powiadomienia** naciśnij „Zezwól na powiadomienia”. Telefon sam sprawdza nowe analizy mniej więcej co 2 godziny i przypomina godzinę przed meczami z kuponu. Jeśli powiadomienia nie przychodzą, wyłącz dla aplikacji Przewaga optymalizację baterii (Ustawienia → Aplikacje → Przewaga → Bateria → Bez ograniczeń).
+- **Kupon:** w analizie meczu, w zakładce **Rynki**, przycisk **+** dodaje selekcję do kuponu (jedna na mecz). Kupon otwiera się przyciskiem nad dolnym menu.
 - Nowa wersja aplikacji: w **Profilu** pojawi się „Pobierz aktualizację”. Instaluje się na poprzednią wersję i zachowuje ustawienia.
 
 ## Gdy coś nie działa

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { LuCircleSlash, LuClock, LuDatabase, LuTriangleAlert, LuCircleMinus, LuUserX, LuChevronDown } from "react-icons/lu";
+import { LuCircleSlash, LuClock, LuDatabase, LuTriangleAlert, LuCircleMinus, LuUserX, LuChevronDown, LuPlus, LuCheck } from "react-icons/lu";
+import { useCoupon } from "../api/CouponContext";
 import { useData, useQuery } from "../api/DataContext";
 import { PageHeader, ResponsibleNote } from "../components/layout/AppShell";
 import { Badge, Card, DemoBadge, EmptyState, KeyValue, Skeleton } from "../components/ui/primitives";
@@ -290,13 +291,16 @@ function MarketsTab({ e }: { e: SportEvent }) {
         Model wycenia każdą selekcję. Kurs ma wartość, gdy prawdopodobieństwo modelu przewyższa prawdopodobieństwo implikowane z najlepszego kursu. Marża podana dla bukmachera referencyjnego.
       </p>
       {e.markets.map((m) => (
-        <MarketCard key={`${m.market}-${m.name}`} m={m} recIds={e.recommendations.filter((r) => r.status === "active").map((r) => r.selectionId)} />
+        <MarketCard key={`${m.market}-${m.name}`} e={e} m={m} recIds={e.recommendations.filter((r) => r.status === "active").map((r) => r.selectionId)} />
       ))}
     </>
   );
 }
 
-function MarketCard({ m, recIds }: { m: MarketAnalysis; recIds: string[] }) {
+function MarketCard({ e, m, recIds }: { e: SportEvent; m: MarketAnalysis; recIds: string[] }) {
+  const coupon = useCoupon();
+  const [note, setNote] = useState<string | null>(null);
+  const started = Date.parse(e.kickoff) <= Date.now();
   if (!m.available) {
     return (
       <Card className="p-4 opacity-80">
@@ -323,7 +327,20 @@ function MarketCard({ m, recIds }: { m: MarketAnalysis; recIds: string[] }) {
             <div key={s.id} className={cn("rounded-xl p-3 ring-1 ring-inset", isRec ? "bg-pos/[0.06] ring-pos/25" : "bg-ink-800/60 ring-line")}>
               <div className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-[13px] font-medium">{s.label}</span>
-                <span className="tnum shrink-0 text-[15px] font-bold">{fmtPrice(best.price)}</span>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="tnum text-[15px] font-bold">{fmtPrice(best.price)}</span>
+                  {!started && (
+                    <button
+                      type="button"
+                      onClick={() => setNote(coupon.toggle(e, s))}
+                      className={cn("grid size-7 place-items-center rounded-full ring-1 ring-inset", coupon.has(s.id) ? "bg-accent text-ink-950 ring-accent" : "text-fg-muted ring-line-strong hover:bg-white/5")}
+                      aria-label={coupon.has(s.id) ? `Usuń z kuponu: ${s.label}` : `Dodaj do kuponu: ${s.label}`}
+                      aria-pressed={coupon.has(s.id)}
+                    >
+                      {coupon.has(s.id) ? <LuCheck className="size-4" /> : <LuPlus className="size-4" />}
+                    </button>
+                  )}
+                </span>
               </div>
               <div className="tnum mt-1.5 flex items-center gap-2 text-[11px] text-fg-faint">
                 <span>
@@ -337,6 +354,7 @@ function MarketCard({ m, recIds }: { m: MarketAnalysis; recIds: string[] }) {
           );
         })}
       </div>
+      {note && <p className="mt-3 rounded-lg bg-warn/10 px-3 py-2 text-[11px] leading-relaxed text-warn">{note}</p>}
       <p className={cn("mt-3 text-xs leading-relaxed", m.selections.some((s) => recIds.includes(s.id)) ? "text-pos" : "text-fg-faint")}>{m.verdict}</p>
     </Card>
   );
