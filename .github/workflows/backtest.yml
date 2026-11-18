@@ -1,0 +1,31 @@
+name: Backtest i kalibracja
+
+on:
+  push:
+    branches: [etap-5]
+    paths:
+      - "pipeline/tools/probe_sources.py"
+      - ".github/workflows/backtest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backtest
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Sonda źródeł
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+          BALLDONTLIE_KEY: ${{ secrets.BALLDONTLIE_KEY }}
+        run: python pipeline/tools/probe_sources.py
