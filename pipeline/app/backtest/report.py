@@ -111,6 +111,25 @@ def markdown(res: dict, calib: dict) -> str:
         a("")
         a("Darmowe źródła nie mają historii kursów pucharowych, więc przewagi nad rynkiem nie da się jeszcze sprawdzić: model jest pokazywany w aplikacji, typy pozostają wyłączone, a kursy zbierane codziennie posłużą do walidacji.")
     a("")
+    a("## Tryb rynkowy (bez modelu)")
+    a("")
+    a("Typ = najlepszy kurs rynku co najmniej 3% powyżej kursu uczciwego (kurs referencyjny po odjęciu marży), kurs ≤ 4,0, najwyżej 15% ponad kurs średni, "
+      "linie połówkowe. Reguły ustalone z góry (nic nie dobierano na danych), więc liczą się wszystkie sezony. Kluczowa miara: EV wobec linii zamknięcia "
+      "(czy kurs wzięty był lepszy od uczciwego kursu tuż przed meczem) — mniej zależna od szczęścia niż ROI.")
+    a("")
+    a("| Liga | Typy | Trafność | Śr. kurs | ROI (kurs najlepszy) | ROI po podatku | EV wobec zamknięcia | Test od 1.07.2025: typy / ROI |")
+    a("|---|---|---|---|---|---|---|---|")
+    for lg, d in (fb.get("leagues") or {}).items():
+        mm = d.get("market_mode") or {}
+        s_, h_ = mm.get("all") or {}, mm.get("hold") or {}
+        if not s_.get("bets"):
+            a(f"| {name(lg)} | 0 | — | — | — | — | — | — |")
+            continue
+        a(f"| {name(lg)} | {s_['bets']} | {pct(s_['hit_rate'], 1, False)} | {num(s_['avg_price'], 2)} | {pct(s_['roi'])} (±{pct(s_['roi_se'], 1, False)}) | {pct(s_['roi_taxed'])} | "
+          f"{pct(s_['ev_close'])} | {h_.get('bets', 0)} / {pct(h_.get('roi'))} |")
+    a("")
+    a("NBA: archiwum ma jeden kurs na mecz (konsensus), więc trybu rynkowego nie da się sprawdzić na historii — w aplikacji działa na bieżących kursach wielu bukmacherów.")
+    a("")
     a("## Niskie kursy: czy to pułapka?")
     a("")
     a("Wszystkie mecze z kursami (bez modelu). Kurs średni rynku przed meczem; „wygrane” = jak często selekcja w tym przedziale kursu faktycznie wygrała; "

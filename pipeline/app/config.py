@@ -58,6 +58,15 @@ MAX_ODDS_AGE_H = 14
 # information (injury, rotation, lineup news): never recommend, flag instead.
 MAX_DISAGREEMENT = 0.12
 
+# ---- market mode ("tryb rynkowy"): a bookmaker pays more than the margin-free price of the sharpest book ----
+# No model involved. Works in every league that has odds (also cups and the Euroleague).
+MARKET_MODE = True
+MARKET_MIN_EV = 0.03  # best price vs margin-free reference price
+MARKET_MAX_PRICE = 4.0  # longshots are too noisy for this
+MARKET_MIN_BOOKS = 6  # enough quotes to call it a consensus
+MARKET_MAX_OVER_MEDIAN = 0.15  # best price more than 15% above the median = stale or wrong quote, skipped
+MARKET_MAX_REF_MARGIN = 0.06  # reference book must have a low margin (sharp book / exchange)
+
 # ---- request budgets (free plans) ----
 API_SPORTS_DAILY_LIMIT = 100  # per API (football, basketball) per day (backtests only)
 API_SPORTS_RESERVE = 10  # never spend the last N requests

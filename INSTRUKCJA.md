@@ -61,6 +61,8 @@ Wyślij mu link `github.com/TWOJA-NAZWA/przewaga/releases/latest` (np. Messenger
 - Bez internetu aplikacja pokazuje ostatnie pobrane dane z oznaczeniem „Offline”.
 - **Backtest i kalibracja** (workflow „Backtest i kalibracja”): 1. dnia miesiąca GitHub sam sprawdza model na historii i ustala, w których ligach wolno mu dawać typy; w poniedziałki odświeża ratingi drużyn pucharowych. Wynik: **Statystyki → Backtest** w aplikacji i plik `docs/BACKTEST.md`. Nic nie trzeba klikać.
 - **Powiadomienia (od v0.5):** w **Profilu → Powiadomienia** naciśnij „Zezwól na powiadomienia”. Telefon sam sprawdza nowe analizy mniej więcej co 2 godziny i przypomina godzinę przed meczami z kuponu. Jeśli powiadomienia nie przychodzą, wyłącz dla aplikacji Przewaga optymalizację baterii (Ustawienia → Aplikacje → Przewaga → Bateria → Bez ograniczeń).
+- **Okazje rynkowe (od v0.6):** gdy model nie ma typu, aplikacja pokazuje „okazje rynkowe” — kurs u któregoś bukmachera wyższy od uczciwego kursu rynku. To nie prognoza, tylko porównanie kursów; przy każdej jest minimalny kurs, jaki musi dać legalny polski bukmacher (po podatku). Wyłączysz je w **Profilu → Okazje rynkowe**.
+- **Kontuzje NBA:** w meczach NBA widać nieobecnych z oficjalnego raportu ligi (aktualizacja przy każdym przebiegu).
 - **Kupon:** w analizie meczu, w zakładce **Rynki**, przycisk **+** dodaje selekcję do kuponu (jedna na mecz). Kupon otwiera się przyciskiem nad dolnym menu.
 - Nowa wersja aplikacji: w **Profilu** pojawi się „Pobierz aktualizację”. Instaluje się na poprzednią wersję i zachowuje ustawienia.
 

@@ -114,6 +114,7 @@ def rec_json(r: sqlite3.Row, sport: str) -> dict[str, Any]:
         "generatedAt": r["generated_at"],
         "updatedAt": r["updated_at"],
         "status": "withdrawn" if r["status"] == "withdrawn" else "active",
+        "kind": r["kind"] if "kind" in r.keys() else "model",
         **({"withdrawReason": r["withdraw_reason"]} if r["withdraw_reason"] else {}),
     }
 

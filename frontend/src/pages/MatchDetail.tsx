@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { LuCircleSlash, LuClock, LuDatabase, LuTriangleAlert, LuCircleMinus, LuUserX, LuChevronDown, LuPlus, LuCheck } from "react-icons/lu";
 import { useCoupon } from "../api/CouponContext";
 import { PriceInsightCard } from "../components/match/PriceInsight";
+import { MARKET_NOTE, MarketBadge } from "../components/match/MarketBadge";
 import { useData, useQuery } from "../api/DataContext";
 import { PageHeader, ResponsibleNote } from "../components/layout/AppShell";
 import { Badge, Card, DemoBadge, EmptyState, KeyValue, Skeleton } from "../components/ui/primitives";
@@ -225,7 +226,7 @@ function BestBet({ rec }: { rec: Recommendation }) {
     <Card className="overflow-hidden p-0 ring-1 ring-accent/20">
       <div className="bg-[linear-gradient(135deg,rgb(47_214_234/0.1),transparent_60%)] p-4">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold tracking-wide text-accent uppercase">Najlepszy typ</span>
+          <span className="text-[11px] font-semibold tracking-wide text-accent uppercase">{rec.kind === "market" ? "Okazja rynkowa" : "Najlepszy typ"}</span>
           <span className="text-[11px] text-fg-faint">Wygenerowano {fmtAgo(rec.generatedAt)}</span>
         </div>
         <div className="mt-3 flex items-center gap-3">
@@ -234,6 +235,7 @@ function BestBet({ rec }: { rec: Recommendation }) {
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <EvPill ev={rec.ev} />
               <RiskBadge risk={rec.risk} />
+              {rec.kind === "market" && <MarketBadge />}
             </div>
           </div>
           <div className="text-right">
@@ -241,6 +243,7 @@ function BestBet({ rec }: { rec: Recommendation }) {
             <div className="mt-1.5 text-[11px] text-fg-faint">najlepszy kurs · {bookmakerName(rec.bookmaker)}</div>
           </div>
         </div>
+        {rec.kind === "market" && <p className="mt-3 text-[11px] leading-relaxed text-fg-muted">{MARKET_NOTE}</p>}
         <div className="mt-5">
           <ProbBar model={rec.modelProb} low={rec.probLow} high={rec.probHigh} implied={rec.impliedProb} />
           <ProbLegend model={rec.modelProb} low={rec.probLow} high={rec.probHigh} implied={rec.impliedProb} />

@@ -12,7 +12,7 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from ..engine.evaluate import Context, Market, Quote, Selection, price_market
+from ..engine.evaluate import Context, Market, Quote, Selection, market_candidates, price_market
 from ..engine.odds import fair_probabilities
 from ..models import basketball as bb_model
 from ..models import football as fb_model
@@ -223,7 +223,8 @@ def completeness(n_min: float) -> float:
     return round(0.35 + min(1.0, n_min / 15) * 0.35 + 0.1, 3)
 
 
-def simulate(rows: list[Row], params: LeagueParams, per_event: int = 2) -> list[Bet]:
+def simulate(rows: list[Row], params: LeagueParams, per_event: int = 2, mode: str = "model") -> list[Bet]:
+    """mode 'model': the model gate (price_market); 'market': tryb rynkowy (market_candidates, no model)."""
     by_event: dict[str, list[Row]] = {}
     for r in rows:
         by_event.setdefault(r.event_id, []).append(r)
@@ -240,7 +241,10 @@ def simulate(rows: list[Row], params: LeagueParams, per_event: int = 2) -> list[
                 for k, nm, pm, rp, bp in zip(r.keys, r.names, r.p_model, r.ref, r.best)
             ]
             mk = Market(r.market, r.market, r.line, sels)
-            for c in price_market(mk, r.half_width, ctx):
+            found = price_market(mk, r.half_width, ctx)
+            if mode == "market":
+                found = market_candidates(mk, ctx, medians=list(r.avg) if r.avg else None, min_books=0)
+            for c in found:
                 cands.append((c, r))
         cands.sort(key=lambda cr: (cr[0].quality, cr[0].ev), reverse=True)
         for c, r in cands[:per_event]:
@@ -248,7 +252,7 @@ def simulate(rows: list[Row], params: LeagueParams, per_event: int = 2) -> list[
             won = None if r.outcome < 0 else (r.outcome == i)
             close_fair = fair_probabilities(list(r.close_ref))[i] if r.close_ref else None
             bets.append(
-                Bet(r, c.sel.key, c.sel.label, c.best.price, c.best.bookmaker, c.sel.model_prob, c.sel.raw_model_prob, c.sel.fair_prob, c.ev, c.quality, c.risk,
+                Bet(r, c.sel.key, c.sel.label, c.best.price, c.best.bookmaker, c.sel.fair_prob if mode == "market" else c.sel.model_prob, c.sel.raw_model_prob, c.sel.fair_prob, c.ev, c.quality, c.risk,
                     won, 0.0 if won is None else (c.best.price - 1 if won else -1.0), r.avg[i] if r.avg else None, r.close_best[i] if r.close_best else None, close_fair)
             )
     return bets
@@ -377,6 +381,14 @@ def by_market(rows: list[Row]) -> dict[str, list[Row]]:
     for r in rows:
         out.setdefault(r.market, []).append(r)
     return out
+
+
+MARKET_PARAMS = LeagueParams("market", status="validating", markets={m: MarketParams(0.0, 1.0, "validating") for m in ("h2h", "totals", "spreads")})
+
+
+def simulate_market(rows: list[Row]) -> list[Bet]:
+    """Tryb rynkowy on history: fixed rules (config.MARKET_*), nothing tuned, so every season counts."""
+    return simulate(rows, MARKET_PARAMS, mode="market")
 
 
 def apply_market_params(rows: list[Row], base: LeagueParams, results: dict[str, MarketResult], allow_all: bool = True) -> LeagueParams:

@@ -44,6 +44,7 @@ class FakeWorld:
     calls: list[str] = field(default_factory=list)
     odds_remaining: int = 500
     serve_injuries: bool = False  # official NBA injury report (binary PDF via get_raw)
+    generous_book: bool = False  # extra books in the EPL; one of them pays ~5% above the fair price on the home side
     clubelo_down: bool = False
 
     def __post_init__(self) -> None:
@@ -227,7 +228,10 @@ class FakeWorld:
                 fair = [p / tot for p in fair]
                 hn, an = ODDS_NAMES.get(f["h"][1], f["h"][1]), ODDS_NAMES.get(f["a"][1], f["a"][1])
                 books = []
-                for key, title, margin in (("pinnacle", "Pinnacle", 0.025), ("betclic_fr", "Betclic", 0.06), ("unibet_eu", "Unibet", 0.05)):
+                lineup = [("pinnacle", "Pinnacle", 0.025), ("betclic_fr", "Betclic", 0.06), ("unibet_eu", "Unibet", 0.05)]
+                if self.generous_book:
+                    lineup += [("williamhill", "William Hill", 0.05), ("marathonbet", "Marathon Bet", 0.04), ("sport888", "888sport", 0.06), ("onexbet", "1xBet", -0.035)]
+                for key, title, margin in lineup:
                     pr = [round(1 / (p * (1 + margin)), 2) for p in fair]
                     po = self._over(f["lam"] + f["mu"], 2.5) * math.exp(rng.gauss(0, self.odds_skew))
                     po = min(max(po, 0.05), 0.95)

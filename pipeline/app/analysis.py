@@ -5,10 +5,10 @@ import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from .config import HORIZON_DAYS, LEAGUE_BY_KEY, MAX_ODDS_AGE_H, previous_season, season_for
+from .config import HORIZON_DAYS, LEAGUE_BY_KEY, MARKET_MODE, MAX_ODDS_AGE_H, previous_season, season_for
 from .params import LeagueParams, default_params
 from .db import dumps
-from .engine.evaluate import Candidate, Context, Market, Quote, Selection, fmt_pct, price_market
+from .engine.evaluate import Candidate, Context, Market, Quote, Selection, fmt_pct, market_candidates, price_market
 from .engine.odds import closing_line_value
 from .models.basketball import Game, Ratings
 from .models.schedule import GameCtx, contexts
@@ -180,6 +180,10 @@ def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes |
 
     for mk in a.markets:
         a.candidates.extend(price_market(mk, hw, ctx))
+    if MARKET_MODE and not a.candidates:
+        for mk in a.markets:
+            if not pp.can_recommend(mk.market):
+                a.candidates.extend(market_candidates(mk, ctx))
     a.candidates.sort(key=lambda c: (c.quality, c.ev), reverse=True)
     a.candidates = a.candidates[:2]
     return a
@@ -215,6 +219,10 @@ def market_only(a: EventAnalysis, quotes: dict, history: dict, now: datetime) ->
         price_market(mk, lambda p: 0.02, ctx)
         mk.verdict = MARKET_ONLY_VERDICT
         a.markets.append(mk)
+        if MARKET_MODE:
+            a.candidates.extend(market_candidates(mk, ctx))
+    a.candidates.sort(key=lambda c: (c.quality, c.ev), reverse=True)
+    a.candidates = a.candidates[:2]
     return a
 
 
@@ -230,7 +238,30 @@ def team_form(conn: sqlite3.Connection, team_id: str, before: str, n: int = 8) -
     ).fetchall()
 
 
+def market_reasons(conn: sqlite3.Connection, a: EventAnalysis, c: Candidate) -> tuple[list[str], list[str]]:
+    mk = c.market
+    title = lambda key: (conn.execute("SELECT title FROM bookmakers WHERE key = ?", (key,)).fetchone() or {"title": key})["title"] if key and _has_table(conn, "bookmakers") else key  # noqa: E731
+    fair_price = 1 / c.sel.fair_prob
+    pl = lambda x, d=2: f"{x:.{d}f}".replace(".", ",")  # noqa: E731
+    pro = [
+        f"Kurs {pl(c.best.price)} u {title(c.best.bookmaker)} jest o {pl(100 * c.ev, 1)}% wyższy od kursu uczciwego {pl(fair_price)}",
+        f"Kurs uczciwy = kursy {title(mk.ref_book)} po odjęciu marży ({pl(100 * (mk.margin or 0), 1)}%) — bukmacher z najniższą marżą, najtrafniejszy w backteście",
+        f"Mediana {c.books} bukmacherów: {pl(c.median or 0)} — ten kurs nie jest pomyłką ani nieaktualnym odczytem (najwyżej 15% ponad medianę)",
+        f"Szansa wg rynku bez marży: {fmt_pct(c.sel.fair_prob)}; kurs zakłada {fmt_pct(c.implied)}",
+    ]
+    con = [
+        "To przewaga z porównania kursów, nie z modelu — znika, gdy bukmacher wyrówna kurs",
+        f"W Polsce graj tylko u legalnych bukmacherów: po 12% podatku zakład ma sens dopiero od kursu {pl(1 / (c.sel.fair_prob * 0.88))}",
+        "Backtest: takich okazji było mało, a wynik obarczony dużą niepewnością (zob. Statystyki → Backtest)",
+    ]
+    if c.best.price > 2.6:
+        con.append("Wysoki kurs = duża wariancja wyniku pojedynczego zakładu")
+    return pro, con
+
+
 def reasons(conn: sqlite3.Connection, a: EventAnalysis, c: Candidate) -> tuple[list[str], list[str]]:
+    if c.kind == "market":
+        return market_reasons(conn, a, c)
     ev = a.event
     pro, con = [], []
     if a.lam_mu:
@@ -290,12 +321,15 @@ def sync_recommendations(conn: sqlite3.Connection, a: EventAnalysis, now: dateti
         row = existing.get(rid)
         if row is None:
             pro, con = reasons(conn, a, c)
+            market = c.kind == "market"
+            p = c.sel.fair_prob if market else c.sel.model_prob
+            lo, hi = (max(0.005, p - c.hw), min(0.995, p + c.hw)) if market else (c.sel.prob_low, c.sel.prob_high)
             conn.execute(
                 """INSERT INTO recommendations(id, event_id, market, selection, line, label, bookmaker, price, current_price, model_prob, prob_low, prob_high,
-                   implied_prob, fair_prob, ev, quality, risk, reasons_for, reasons_against, model_version, generated_at, updated_at, status, result)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'active','pending')""",
-                (rid, ev["id"], c.market.market, c.sel.key, c.sel.line, c.sel.label, c.best.bookmaker, c.best.price, c.best.price, c.sel.model_prob, c.sel.prob_low, c.sel.prob_high,
-                 c.implied, c.sel.fair_prob, c.ev, c.quality, c.risk, dumps(pro), dumps(con), MODEL_VERSION[ev["sport"]], iso(now), iso(now)),
+                   implied_prob, fair_prob, ev, quality, risk, reasons_for, reasons_against, model_version, generated_at, updated_at, status, result, kind)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'active','pending',?)""",
+                (rid, ev["id"], c.market.market, c.sel.key, c.sel.line, c.sel.label, c.best.bookmaker, c.best.price, c.best.price, p, lo, hi,
+                 c.implied, c.sel.fair_prob, c.ev, c.quality, c.risk, dumps(pro), dumps(con), "rynek-v1" if market else MODEL_VERSION[ev["sport"]], iso(now), iso(now), c.kind),
             )
             stats["new"] += 1
         elif row["status"] == "active":
@@ -314,6 +348,12 @@ def sync_recommendations(conn: sqlite3.Connection, a: EventAnalysis, now: dateti
 
 
 def withdraw_reason(a: EventAnalysis, row: sqlite3.Row) -> str:
+    if "kind" in row.keys() and row["kind"] == "market":
+        for mk in a.markets:
+            for s in mk.selections:
+                if mk.market == row["market"] and s.key == row["selection"] and s.line == row["line"] and s.best:
+                    return f"Najlepszy kurs to teraz {s.best.price:.2f} — nie przewyższa już kursu uczciwego rynku {1 / s.fair_prob:.2f} o 3%.".replace(".", ",") if s.fair_prob else "Okazja rynkowa zniknęła."
+        return "Okazja rynkowa zniknęła (kurs zdjęty z oferty)."
     if a.params is not None and not a.params.can_recommend(row["market"]):
         return "Backtest walk-forward nie wykazał przewagi modelu nad rynkiem dla tego rynku — typy wyłączone (ETAP 5)."
     for mk in a.markets:

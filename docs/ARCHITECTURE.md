@@ -143,6 +143,15 @@ składowe: wielkość przewagi względem niepewności (edge / szerokość przedz
 - Historia podobnych kursów: `app/price_buckets.json` z backtestu — dla każdej ligi i przedziału kursu (1,01–1,15 … 6+): liczba selekcji, skuteczność z 95% przedziałem Wilsona, szansa w kursie i bez marży, zwrot przy kursie średnim, najlepszym i po podatku 12%. Ocena „pułapki” porównuje skuteczność z rynkiem bez marży (istotna tylko, gdy cały przedział ufności leży poniżej).
 - NBA: zmęczenie i terminarz (`models/schedule.py`): dni przerwy, back-to-back, podróż między halami, mecze w 7 dni — liczone wyłącznie z wcześniejszych meczów. W modelu tylko, gdy backtest pokaże poprawę (`fatigue` w calibration.json); w analizie kursu pokazywane zawsze.
 
+**Tryb rynkowy (okazje rynkowe, `engine.evaluate.market_candidates`)**
+- Typ bez modelu: najlepszy kurs bukmachera co najmniej 3% powyżej kursu uczciwego (kurs bukmachera z najniższą marżą, ≤ 6%, po jej odjęciu), co najmniej 6 innych bukmacherów, najlepszy kurs najwyżej 15% ponad medianę (odrzuca błędne i nieaktualne kursy), kurs ≤ 4,0, linie połówkowe, > 30 min do startu. Działa w każdej lidze z kursami (także puchary i Euroliga), gdy model nie ma zweryfikowanego typu.
+- Zapisywane jak inne typy (`recommendations.kind = 'market'`, wersja `rynek-v1`), rozliczane i mierzone CLV. Prawdopodobieństwo = rynek bez marży. Wyłączalne w Profilu.
+- Backtest: te same reguły na kursach z football-data.co.uk (najlepszy kurs = maksimum rynku, mediana ≈ kurs średni), wszystkie sezony; wynik w `docs/BACKTEST.md` i w Statystyki → Backtest.
+
+**Kontuzje i ClubElo**
+- NBA: oficjalny raport kontuzji ligi (PDF, publikowany co 15 min) — `providers/nba_injuries.py` odczytuje tabelę z pozycji słów (pdfplumber), zapis jako migawka w `injuries`; w aplikacji lista nieobecnych (bez przypisań do G League) i czynnik w analizie kursu. Model nie zna wagi zawodników, więc liczba nieobecnych nie zmienia prognozy.
+- ClubElo (`providers/clubelo.py`, CSV api.clubelo.com): ranking Elo klubów europejskich jako niezależne porównanie w analizie kursu. Awaria źródła jest tylko ostrzeżeniem.
+
 **Reguły twarde:** EV ≤ 0 → nigdy nie rekomenduj. Brak danych nie jest sygnałem pozytywnym — obniża ocenę. Brak wartościowych rynków → komunikat „Brak zakładów spełniających obecnie kryteria jakości…”.
 
 ## 7. Kupony (ETAP 6)

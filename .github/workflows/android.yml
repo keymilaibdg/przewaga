@@ -5,7 +5,7 @@ name: Budowa aplikacji Android (APK)
 # (updates install over the previous version). Without it a debug-signed APK is built.
 on:
   push:
-    branches: [main, analiza-kursu]
+    branches: [main, kontuzje-clubelo]
     paths:
       - "frontend/**"
       - ".github/workflows/android.yml"

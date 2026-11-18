@@ -169,3 +169,53 @@ def test_clubelo_down_is_not_critical(tmp_path, monkeypatch) -> None:
     s = Pipeline(conn, FakeWorld(now=NOW, clubelo_down=True), KEYS, clock=lambda: NOW, sleep=NO_SLEEP).run("morning")
     assert s["clubelo"] == 0 and any(e.startswith("uwaga (ClubElo)") for e in s["errors"])
     assert all(e.startswith("uwaga") for e in s["errors"] if "ClubElo" in e)  # warning only, never a failed run
+
+
+def test_market_candidates_guards() -> None:
+    from app.engine.evaluate import Context, Market, Quote, Selection, market_candidates, price_market
+    from app.params import LeagueParams, MarketParams
+
+    t = datetime(2026, 11, 17, 7, 0, tzinfo=timezone.utc)
+    def mk(extra: float, others: int = 7) -> Market:
+        sels = []
+        for key, fair_price in (("home", 2.0), ("draw", 3.6), ("away", 4.5)):
+            qs = [Quote("pinnacle", round(fair_price / 1.02, 2), t)] + [Quote(f"b{i}", round(fair_price / 1.06, 2), t) for i in range(others - 1)]
+            if key == "home":
+                qs.append(Quote("generous", round(fair_price * extra, 2), t))
+            sels.append(Selection(key, key, None, qs, 0.4))
+        return Market("h2h", "1X2", None, sels)
+
+    ctx = Context(now=t, kickoff=t + timedelta(hours=10), completeness=0.8, both_teams_known=True,
+                  params=LeagueParams("x", status="validating", markets={"h2h": MarketParams(0.0, 1.0, "validating")}))
+    m = mk(1.05)
+    assert price_market(m, lambda p: 0.02, ctx) == []  # no model recommendation
+    (c,) = market_candidates(m, ctx)
+    assert c.kind == "market" and c.sel.key == "home" and c.best.bookmaker == "generous" and c.ev >= 0.03 and c.quality >= 60
+    m = mk(1.30)  # 30% above fair and far above the median: a wrong or stale quote
+    price_market(m, lambda p: 0.02, ctx)
+    assert market_candidates(m, ctx) == []
+    m = mk(1.05, others=3)  # too few books
+    price_market(m, lambda p: 0.02, ctx)
+    assert market_candidates(m, ctx) == []
+    late = Context(now=t, kickoff=t + timedelta(minutes=20), completeness=0.8, both_teams_known=True, params=ctx.params)
+    m = mk(1.05)
+    price_market(m, lambda p: 0.02, late)
+    assert market_candidates(m, late) == []
+
+
+def test_market_mode_in_pipeline(tmp_path, monkeypatch) -> None:
+    f = tmp_path / "c.json"
+    f.write_text(json.dumps({"generated_at": "x", "leagues": {lg: {"markets": {m: {"model_weight": 0.0, "status": "validating"} for m in ("h2h", "totals", "spreads")}} for lg in ("epl", "nba")}}))
+    monkeypatch.setenv("PRZEWAGA_CALIBRATION", str(f))
+    monkeypatch.setattr(cli, "PUBLISH_DIR", tmp_path / "data")
+    conn = connect(tmp_path / "db.sqlite3")
+    Pipeline(conn, FakeWorld(now=NOW, generous_book=True), KEYS, clock=lambda: NOW, sleep=NO_SLEEP).run("morning")
+    recs = conn.execute("SELECT * FROM recommendations").fetchall()
+    assert recs and all(r["kind"] == "market" and r["model_version"] == "rynek-v1" for r in recs)
+    for r in recs:  # (fake totals prices are drawn per book, so any book may top them; 1X2 is priced consistently)
+        assert r["ev"] >= 0.03 and r["model_prob"] == pytest.approx(r["fair_prob"])
+        assert r["market"] != "h2h" or r["bookmaker"] == "onexbet"
+    events = load(tmp_path / "data", "events.json")
+    tips = [r for e in events for r in e["recommendations"]]
+    assert tips and all(t["kind"] == "market" for t in tips)
+    assert any("porównania kursów" in x for t in tips for x in t["reasonsAgainst"])

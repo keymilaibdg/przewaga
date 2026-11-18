@@ -10,6 +10,7 @@ import { EvPill, ProbBar, ProbLegend, RiskBadge, ScoreRing } from "../ui/indicat
 import { TeamCrest } from "./TeamCrest";
 import { PlPriceHint } from "./PlPrice";
 import { SportIcon } from "./SportIcon";
+import { MarketBadge } from "./MarketBadge";
 
 export function TipCard({ event, rec, rank, defaultOpen = false, className }: { event: SportEvent; rec: Recommendation; rank?: number; defaultOpen?: boolean; className?: string }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -39,6 +40,7 @@ export function TipCard({ event, rec, rank, defaultOpen = false, className }: { 
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <EvPill ev={rec.ev} />
               <RiskBadge risk={rec.risk} compact />
+              {rec.kind === "market" && <MarketBadge />}
             </div>
           </div>
           <div className="shrink-0 text-right">
