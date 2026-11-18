@@ -1,0 +1,156 @@
+{
+  "generated_at": "2026-11-18T09:49:33Z",
+  "source": "python -m app.backtest run",
+  "leagues": {
+    "epl": {
+      "status": "validating",
+      "reason": "h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; totals: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej",
+      "min_ev": 0.02,
+      "min_quality": 60,
+      "max_disagreement": 0.12,
+      "xi": 0.0019,
+      "markets": {
+        "h2h": {
+          "model_weight": 0.0,
+          "hw_scale": 2.033,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        },
+        "totals": {
+          "model_weight": 0.0,
+          "hw_scale": 1.338,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        }
+      }
+    },
+    "laliga": {
+      "status": "validating",
+      "reason": "h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; totals: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej",
+      "min_ev": 0.02,
+      "min_quality": 60,
+      "max_disagreement": 0.12,
+      "xi": 0.0019,
+      "markets": {
+        "h2h": {
+          "model_weight": 0.0,
+          "hw_scale": 0.905,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        },
+        "totals": {
+          "model_weight": 0.0,
+          "hw_scale": 1.134,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        }
+      }
+    },
+    "bundesliga": {
+      "status": "validating",
+      "reason": "h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; totals: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej",
+      "min_ev": 0.02,
+      "min_quality": 60,
+      "max_disagreement": 0.12,
+      "xi": 0.0019,
+      "markets": {
+        "h2h": {
+          "model_weight": 0.0,
+          "hw_scale": 0.893,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        },
+        "totals": {
+          "model_weight": 0.0,
+          "hw_scale": 1.043,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        }
+      }
+    },
+    "ekstraklasa": {
+      "status": "validating",
+      "reason": "h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej",
+      "min_ev": 0.02,
+      "min_quality": 60,
+      "max_disagreement": 0.12,
+      "xi": 0.0019,
+      "markets": {
+        "h2h": {
+          "model_weight": 0.0,
+          "hw_scale": 0.951,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        }
+      }
+    },
+    "nba": {
+      "status": "validating",
+      "reason": "h2h: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; spreads: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej; totals: optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej",
+      "min_ev": 0.02,
+      "min_quality": 60,
+      "max_disagreement": 0.12,
+      "xi": 0.008,
+      "markets": {
+        "h2h": {
+          "model_weight": 0.0,
+          "hw_scale": 1.214,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        },
+        "spreads": {
+          "model_weight": 0.0,
+          "hw_scale": 1.214,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        },
+        "totals": {
+          "model_weight": 0.0,
+          "hw_scale": 1.203,
+          "status": "validating",
+          "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+        }
+      }
+    },
+    "ucl": {
+      "status": "validating",
+      "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco",
+      "markets": {
+        "h2h": {
+          "model_weight": 0.5,
+          "hw_scale": 1.0,
+          "status": "validating",
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+        },
+        "totals": {
+          "model_weight": 0.5,
+          "hw_scale": 1.0,
+          "status": "validating",
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+        }
+      }
+    },
+    "uel": {
+      "status": "validating",
+      "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco",
+      "markets": {
+        "h2h": {
+          "model_weight": 0.5,
+          "hw_scale": 1.0,
+          "status": "validating",
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+        },
+        "totals": {
+          "model_weight": 0.5,
+          "hw_scale": 1.0,
+          "status": "validating",
+          "reason": "ratingi międzyligowe; brak darmowej historii kursów pucharowych — walidacja na kursach zbieranych na bieżąco"
+        }
+      }
+    },
+    "euroleague": {
+      "status": "market_only",
+      "reason": "brak darmowego źródła wyników Euroligi do modelu"
+    }
+  }
+}

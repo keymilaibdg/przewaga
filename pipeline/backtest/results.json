@@ -1,0 +1,2286 @@
+{
+ "generated_at": "2026-11-18T09:49:33Z",
+ "football": {
+  "xi_grid": {
+   "0.001": 1.01023,
+   "0.0019": 1.01018,
+   "0.0035": 1.01175
+  },
+  "xi": 0.0019,
+  "leagues": {
+   "epl": {
+    "rows_tune": 3984,
+    "rows_hold": 960,
+    "seasons": [
+     "2019",
+     "2020",
+     "2021",
+     "2022",
+     "2023",
+     "2024",
+     "2025",
+     "2026"
+    ],
+    "ref_sources": [
+     "Avg",
+     "BFE",
+     "P",
+     "PS"
+    ],
+    "closing_only": false,
+    "min_ev": 0.02,
+    "max_disagreement": 0.12,
+    "threshold_grid": [
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.05,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.08,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.12,
+      "bets": 10,
+      "roi": 0.517,
+      "roi_se": 0.3436763658508458
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.05,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.08,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.12,
+      "bets": 10,
+      "roi": 0.517,
+      "roi_se": 0.3436763658508458
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.05,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.08,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.12,
+      "bets": 10,
+      "roi": 0.517,
+      "roi_se": 0.3436763658508458
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.05,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.08,
+      "bets": 8,
+      "roi": 0.6387499999999999,
+      "roi_se": 0.37596275223940545
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.12,
+      "bets": 10,
+      "roi": 0.517,
+      "roi_se": 0.3436763658508458
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.05,
+      "bets": 2,
+      "roi": 0.04499999999999993,
+      "roi_se": 1.045
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.08,
+      "bets": 2,
+      "roi": 0.04499999999999993,
+      "roi_se": 1.045
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.12,
+      "bets": 3,
+      "roi": 0.3833333333333333,
+      "roi_se": 0.6917208814093859
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.05,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.08,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.12,
+      "bets": 1,
+      "roi": 1.06,
+      "roi_se": null
+     }
+    ],
+    "sim_tune": {
+     "bets": 10,
+     "profit": 5.17,
+     "roi": 0.517,
+     "roi_se": 0.3436763658508458,
+     "roi_avg_odds": 0.41,
+     "roi_taxed": 0.33496,
+     "hit_rate": 0.7,
+     "avg_price": 2.1669999999999994,
+     "clv": 0.02847466459239757,
+     "ev_close": 0.04362259150428649
+    },
+    "sim_hold": {
+     "bets": 6,
+     "profit": -3.62,
+     "roi": -0.6033333333333334,
+     "roi_se": 0.3966666666666667,
+     "roi_avg_odds": -0.645,
+     "roi_taxed": -0.6509333333333334,
+     "hit_rate": 0.16666666666666666,
+     "avg_price": 2.348333333333333,
+     "clv": 0.10039675755020709,
+     "ev_close": 0.06701299160433832
+    },
+    "markets": {
+     "h2h": {
+      "market": "h2h",
+      "n_tune": 1992,
+      "n_hold": 480,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 0.95654,
+       "0.05": 0.95683,
+       "0.1": 0.95722,
+       "0.15": 0.9577,
+       "0.2": 0.95827,
+       "0.25": 0.95894,
+       "0.3": 0.9597,
+       "0.35": 0.96056,
+       "0.4": 0.96151,
+       "0.45": 0.96257,
+       "0.5": 0.96372,
+       "0.55": 0.96497,
+       "0.6": 0.96633,
+       "0.65": 0.96781,
+       "0.7": 0.96939,
+       "0.75": 0.97111,
+       "0.8": 0.97295,
+       "0.85": 0.97495,
+       "0.9": 0.97713,
+       "0.95": 0.97953,
+       "1.0": 0.98231
+      },
+      "hw_scale": 2.033,
+      "tune": {
+       "logloss_model": 0.9823107547375053,
+       "logloss_market": 0.9565423153069244,
+       "logloss_blend": 0.9565423153069244,
+       "brier_model": 0.5831705444536124,
+       "brier_market": 0.5669134079848169,
+       "brier_blend": 0.5669134079848169,
+       "rps_model": 0.20384839445301753,
+       "rps_market": 0.19641014385728262,
+       "rps_blend": 0.19641014385728262
+      },
+      "hold": {
+       "logloss_model": 1.0439713966022457,
+       "logloss_market": 1.0154965829482507,
+       "logloss_blend": 1.0154965829482507,
+       "brier_model": 0.6194372889575668,
+       "brier_market": 0.6096498290788136,
+       "brier_blend": 0.6096498290788136,
+       "rps_model": 0.2112121978015192,
+       "rps_market": 0.20556417607597618,
+       "rps_blend": 0.20556417607597618
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.0599210459251576,
+        "observed": 0.13333333333333333,
+        "count": 30
+       },
+       {
+        "predicted": 0.16114825250019946,
+        "observed": 0.1564625850340136,
+        "count": 147
+       },
+       {
+        "predicted": 0.255341589912355,
+        "observed": 0.28376068376068375,
+        "count": 585
+       },
+       {
+        "predicted": 0.344612107457111,
+        "observed": 0.2979452054794521,
+        "count": 292
+       },
+       {
+        "predicted": 0.4437982250253652,
+        "observed": 0.42857142857142855,
+        "count": 182
+       },
+       {
+        "predicted": 0.5436204942552952,
+        "observed": 0.5321100917431193,
+        "count": 109
+       },
+       {
+        "predicted": 0.6389054964967672,
+        "observed": 0.6714285714285714,
+        "count": 70
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.07322730973296497,
+        "observed": 0.0,
+        "count": 28
+       },
+       {
+        "predicted": 0.16063167713901014,
+        "observed": 0.17647058823529413,
+        "count": 204
+       },
+       {
+        "predicted": 0.2547403287873538,
+        "observed": 0.2791461412151067,
+        "count": 609
+       },
+       {
+        "predicted": 0.3475794648233419,
+        "observed": 0.3526315789473684,
+        "count": 190
+       },
+       {
+        "predicted": 0.4474122868207055,
+        "observed": 0.40993788819875776,
+        "count": 161
+       },
+       {
+        "predicted": 0.5471170883318933,
+        "observed": 0.43846153846153846,
+        "count": 130
+       },
+       {
+        "predicted": 0.642612784162061,
+        "observed": 0.6883116883116883,
+        "count": 77
+       },
+       {
+        "predicted": 0.7442236085935542,
+        "observed": 0.7096774193548387,
+        "count": 31
+       }
+      ],
+      "sim_hold": {
+       "bets": 3,
+       "profit": -0.6200000000000001,
+       "roi": -0.2066666666666667,
+       "roi_se": 0.7933333333333334,
+       "roi_avg_odds": -0.29000000000000004,
+       "roi_taxed": -0.3018666666666667,
+       "hit_rate": 0.3333333333333333,
+       "avg_price": 2.5466666666666664,
+       "clv": 0.08848187410024859,
+       "ev_close": 0.06075719509939559
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     },
+     "totals": {
+      "market": "totals",
+      "n_tune": 1992,
+      "n_hold": 480,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 0.67278,
+       "0.05": 0.67297,
+       "0.1": 0.67322,
+       "0.15": 0.67353,
+       "0.2": 0.67392,
+       "0.25": 0.67437,
+       "0.3": 0.6749,
+       "0.35": 0.67549,
+       "0.4": 0.67616,
+       "0.45": 0.6769,
+       "0.5": 0.67771,
+       "0.55": 0.67859,
+       "0.6": 0.67956,
+       "0.65": 0.6806,
+       "0.7": 0.68173,
+       "0.75": 0.68295,
+       "0.8": 0.68425,
+       "0.85": 0.68566,
+       "0.9": 0.68717,
+       "0.95": 0.68879,
+       "1.0": 0.69054
+      },
+      "hw_scale": 1.338,
+      "tune": {
+       "logloss_model": 0.6905446370126552,
+       "logloss_market": 0.6727849087565977,
+       "logloss_blend": 0.6727849087565977,
+       "brier_model": 0.495888604948729,
+       "brier_market": 0.4800351150600667,
+       "brier_blend": 0.4800351150600667
+      },
+      "hold": {
+       "logloss_model": 0.7076380783963337,
+       "logloss_market": 0.6904252936115204,
+       "logloss_blend": 0.6904252936115204,
+       "brier_model": 0.5114329344522939,
+       "brier_market": 0.49695561410330524,
+       "brier_blend": 0.49695561410330524
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.36225963940036415,
+        "observed": 0.46794871794871795,
+        "count": 156
+       },
+       {
+        "predicted": 0.45044865100694514,
+        "observed": 0.42105263157894735,
+        "count": 304
+       },
+       {
+        "predicted": 0.5495513489930549,
+        "observed": 0.5789473684210527,
+        "count": 304
+       },
+       {
+        "predicted": 0.6377403605996358,
+        "observed": 0.532051282051282,
+        "count": 156
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.36752493819291576,
+        "observed": 0.43564356435643564,
+        "count": 101
+       },
+       {
+        "predicted": 0.4539805098953821,
+        "observed": 0.4673913043478261,
+        "count": 368
+       },
+       {
+        "predicted": 0.5448020432764534,
+        "observed": 0.5317460317460317,
+        "count": 378
+       },
+       {
+        "predicted": 0.6324750618070842,
+        "observed": 0.5643564356435643,
+        "count": 101
+       }
+      ],
+      "sim_hold": {
+       "bets": 3,
+       "profit": -3.0,
+       "roi": -1.0,
+       "roi_se": 0.0,
+       "roi_avg_odds": -1.0,
+       "roi_taxed": -1.0,
+       "hit_rate": 0.0,
+       "avg_price": 2.15,
+       "clv": 0.1123116410001656,
+       "ev_close": 0.07326878810928106
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     }
+    },
+    "status": "validating"
+   },
+   "laliga": {
+    "rows_tune": 4020,
+    "rows_hold": 998,
+    "seasons": [
+     "2019",
+     "2020",
+     "2021",
+     "2022",
+     "2023",
+     "2024",
+     "2025",
+     "2026"
+    ],
+    "ref_sources": [
+     "Avg",
+     "BFE",
+     "P",
+     "PS"
+    ],
+    "closing_only": false,
+    "min_ev": 0.02,
+    "max_disagreement": 0.12,
+    "threshold_grid": [
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.05,
+      "bets": 6,
+      "roi": 0.18833333333333332,
+      "roi_se": 0.55171500291767
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.08,
+      "bets": 9,
+      "roi": 0.03444444444444445,
+      "roi_se": 0.4204201308450311
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.12,
+      "bets": 11,
+      "roi": 0.07363636363636364,
+      "roi_se": 0.38051704710892503
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.05,
+      "bets": 6,
+      "roi": 0.18833333333333332,
+      "roi_se": 0.55171500291767
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.08,
+      "bets": 9,
+      "roi": 0.03444444444444445,
+      "roi_se": 0.4204201308450311
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.12,
+      "bets": 11,
+      "roi": 0.07363636363636364,
+      "roi_se": 0.38051704710892503
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.05,
+      "bets": 6,
+      "roi": 0.18833333333333332,
+      "roi_se": 0.55171500291767
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.08,
+      "bets": 9,
+      "roi": 0.03444444444444445,
+      "roi_se": 0.4204201308450311
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.12,
+      "bets": 11,
+      "roi": 0.07363636363636364,
+      "roi_se": 0.38051704710892503
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.05,
+      "bets": 6,
+      "roi": 0.18833333333333332,
+      "roi_se": 0.55171500291767
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.08,
+      "bets": 9,
+      "roi": 0.03444444444444445,
+      "roi_se": 0.4204201308450311
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.12,
+      "bets": 11,
+      "roi": 0.07363636363636364,
+      "roi_se": 0.38051704710892503
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.05,
+      "bets": 2,
+      "roi": -0.06499999999999995,
+      "roi_se": 0.935
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.08,
+      "bets": 5,
+      "roi": -0.18999999999999995,
+      "roi_se": 0.498437558777426
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.12,
+      "bets": 5,
+      "roi": -0.18999999999999995,
+      "roi_se": 0.498437558777426
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.05,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.08,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.12,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     }
+    ],
+    "sim_tune": {
+     "bets": 11,
+     "profit": 0.81,
+     "roi": 0.07363636363636364,
+     "roi_se": 0.38051704710892503,
+     "roi_avg_odds": -0.013636363636363669,
+     "roi_taxed": -0.05519999999999998,
+     "hit_rate": 0.45454545454545453,
+     "avg_price": 2.3172727272727274,
+     "clv": 0.012676440902654256,
+     "ev_close": 0.03260282322570145
+    },
+    "sim_hold": {
+     "bets": 1,
+     "profit": 2.0,
+     "roi": 2.0,
+     "roi_se": null,
+     "roi_avg_odds": 1.4900000000000002,
+     "roi_taxed": 1.6400000000000001,
+     "hit_rate": 1.0,
+     "avg_price": 3.0,
+     "clv": 0.19999999999999996,
+     "ev_close": 0.16901072607599943
+    },
+    "markets": {
+     "h2h": {
+      "market": "h2h",
+      "n_tune": 2010,
+      "n_hold": 499,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 0.96937,
+       "0.05": 0.96972,
+       "0.1": 0.97015,
+       "0.15": 0.97066,
+       "0.2": 0.97125,
+       "0.25": 0.97193,
+       "0.3": 0.97268,
+       "0.35": 0.97352,
+       "0.4": 0.97444,
+       "0.45": 0.97546,
+       "0.5": 0.97656,
+       "0.55": 0.97776,
+       "0.6": 0.97906,
+       "0.65": 0.98046,
+       "0.7": 0.98198,
+       "0.75": 0.98362,
+       "0.8": 0.98541,
+       "0.85": 0.98738,
+       "0.9": 0.98958,
+       "0.95": 0.99218,
+       "1.0": 0.99608
+      },
+      "hw_scale": 0.905,
+      "tune": {
+       "logloss_model": 0.9960756183818497,
+       "logloss_market": 0.9693673275191236,
+       "logloss_blend": 0.9693673275191236,
+       "brier_model": 0.5914074002415067,
+       "brier_market": 0.5758130506442658,
+       "brier_blend": 0.5758130506442658,
+       "rps_model": 0.1983562421524604,
+       "rps_market": 0.19141851454340142,
+       "rps_blend": 0.19141851454340142
+      },
+      "hold": {
+       "logloss_model": 0.9776674227167034,
+       "logloss_market": 0.9521574716389378,
+       "logloss_blend": 0.9521574716389378,
+       "brier_model": 0.579008445835958,
+       "brier_market": 0.5637983797268082,
+       "brier_blend": 0.5637983797268082,
+       "rps_model": 0.1993191777009304,
+       "rps_market": 0.19206102554085375,
+       "rps_blend": 0.19206102554085375
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.06755473686318537,
+        "observed": 0.06,
+        "count": 50
+       },
+       {
+        "predicted": 0.15557611119800924,
+        "observed": 0.11616161616161616,
+        "count": 198
+       },
+       {
+        "predicted": 0.2519216889029976,
+        "observed": 0.2836624775583483,
+        "count": 557
+       },
+       {
+        "predicted": 0.3437137883068111,
+        "observed": 0.3175182481751825,
+        "count": 274
+       },
+       {
+        "predicted": 0.44487673999372906,
+        "observed": 0.398876404494382,
+        "count": 178
+       },
+       {
+        "predicted": 0.544079169379714,
+        "observed": 0.5420560747663551,
+        "count": 107
+       },
+       {
+        "predicted": 0.6443653060206961,
+        "observed": 0.6790123456790124,
+        "count": 81
+       },
+       {
+        "predicted": 0.752784744897251,
+        "observed": 0.7714285714285715,
+        "count": 35
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.07279183398637076,
+        "observed": 0.03508771929824561,
+        "count": 57
+       },
+       {
+        "predicted": 0.1578289792193739,
+        "observed": 0.14948453608247422,
+        "count": 194
+       },
+       {
+        "predicted": 0.26058422093672756,
+        "observed": 0.24524714828897337,
+        "count": 526
+       },
+       {
+        "predicted": 0.33924680899552584,
+        "observed": 0.3433734939759036,
+        "count": 332
+       },
+       {
+        "predicted": 0.4448798215468135,
+        "observed": 0.4682080924855491,
+        "count": 173
+       },
+       {
+        "predicted": 0.5472944450987874,
+        "observed": 0.51,
+        "count": 100
+       },
+       {
+        "predicted": 0.6482852564988458,
+        "observed": 0.6730769230769231,
+        "count": 52
+       },
+       {
+        "predicted": 0.7535131618495283,
+        "observed": 0.8913043478260869,
+        "count": 46
+       }
+      ],
+      "sim_hold": {
+       "bets": 1,
+       "profit": 2.0,
+       "roi": 2.0,
+       "roi_se": null,
+       "roi_avg_odds": 1.4900000000000002,
+       "roi_taxed": 1.6400000000000001,
+       "hit_rate": 1.0,
+       "avg_price": 3.0,
+       "clv": 0.19999999999999996,
+       "ev_close": 0.16901072607599943
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     },
+     "totals": {
+      "market": "totals",
+      "n_tune": 2010,
+      "n_hold": 499,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 0.67066,
+       "0.05": 0.67068,
+       "0.1": 0.67077,
+       "0.15": 0.67094,
+       "0.2": 0.67119,
+       "0.25": 0.6715,
+       "0.3": 0.67189,
+       "0.35": 0.67236,
+       "0.4": 0.6729,
+       "0.45": 0.67352,
+       "0.5": 0.67423,
+       "0.55": 0.67501,
+       "0.6": 0.67588,
+       "0.65": 0.67683,
+       "0.7": 0.67788,
+       "0.75": 0.67902,
+       "0.8": 0.68027,
+       "0.85": 0.68163,
+       "0.9": 0.68313,
+       "0.95": 0.68477,
+       "1.0": 0.68662
+      },
+      "hw_scale": 1.134,
+      "tune": {
+       "logloss_model": 0.6866182261724562,
+       "logloss_market": 0.6706562362619889,
+       "logloss_blend": 0.6706562362619889,
+       "brier_model": 0.4914339815834377,
+       "brier_market": 0.4778646229584867,
+       "brier_blend": 0.4778646229584867
+      },
+      "hold": {
+       "logloss_model": 0.6807489771630074,
+       "logloss_market": 0.6644853206563327,
+       "logloss_blend": 0.6644853206563327,
+       "brier_model": 0.48848909343578734,
+       "brier_market": 0.4725770292526137,
+       "brier_blend": 0.4725770292526137
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.2622568513119556,
+        "observed": 0.34615384615384615,
+        "count": 78
+       },
+       {
+        "predicted": 0.35094628158175134,
+        "observed": 0.379746835443038,
+        "count": 158
+       },
+       {
+        "predicted": 0.4553208764161667,
+        "observed": 0.532,
+        "count": 250
+       },
+       {
+        "predicted": 0.5446791235838332,
+        "observed": 0.468,
+        "count": 250
+       },
+       {
+        "predicted": 0.6490537184182487,
+        "observed": 0.620253164556962,
+        "count": 158
+       },
+       {
+        "predicted": 0.7377431486880445,
+        "observed": 0.6538461538461539,
+        "count": 78
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.26291810760682227,
+        "observed": 0.23076923076923078,
+        "count": 39
+       },
+       {
+        "predicted": 0.35412036809369063,
+        "observed": 0.373134328358209,
+        "count": 134
+       },
+       {
+        "predicted": 0.4537660488643036,
+        "observed": 0.434375,
+        "count": 320
+       },
+       {
+        "predicted": 0.5451062937909233,
+        "observed": 0.5640243902439024,
+        "count": 328
+       },
+       {
+        "predicted": 0.6458796319063095,
+        "observed": 0.6268656716417911,
+        "count": 134
+       },
+       {
+        "predicted": 0.7370818923931778,
+        "observed": 0.7692307692307693,
+        "count": 39
+       }
+      ],
+      "sim_hold": {
+       "bets": 0,
+       "roi": null,
+       "roi_se": null,
+       "roi_avg_odds": null,
+       "roi_taxed": null,
+       "hit_rate": null,
+       "avg_price": null,
+       "clv": null,
+       "ev_close": null,
+       "profit": 0.0
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     }
+    },
+    "status": "validating"
+   },
+   "bundesliga": {
+    "rows_tune": 3224,
+    "rows_hold": 774,
+    "seasons": [
+     "2019",
+     "2020",
+     "2021",
+     "2022",
+     "2023",
+     "2024",
+     "2025",
+     "2026"
+    ],
+    "ref_sources": [
+     "Avg",
+     "BFE",
+     "P",
+     "PS"
+    ],
+    "closing_only": false,
+    "min_ev": 0.02,
+    "max_disagreement": 0.12,
+    "threshold_grid": [
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.05,
+      "bets": 2,
+      "roi": 0.10499999999999998,
+      "roi_se": 1.105
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.08,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.12,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.05,
+      "bets": 2,
+      "roi": 0.10499999999999998,
+      "roi_se": 1.105
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.08,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.12,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.05,
+      "bets": 2,
+      "roi": 0.10499999999999998,
+      "roi_se": 1.105
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.08,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.12,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.05,
+      "bets": 2,
+      "roi": 0.10499999999999998,
+      "roi_se": 1.105
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.08,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.12,
+      "bets": 5,
+      "roi": 0.53,
+      "roi_se": 0.6320284803709402
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.05,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.08,
+      "bets": 1,
+      "roi": -1.0,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.12,
+      "bets": 1,
+      "roi": -1.0,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.05,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.08,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.12,
+      "bets": 0,
+      "roi": null,
+      "roi_se": null
+     }
+    ],
+    "sim_tune": {
+     "bets": 5,
+     "profit": 2.65,
+     "roi": 0.53,
+     "roi_se": 0.6320284803709402,
+     "roi_avg_odds": 0.402,
+     "roi_taxed": 0.3464,
+     "hit_rate": 0.6,
+     "avg_price": 2.3600000000000003,
+     "clv": 0.021549360170996512,
+     "ev_close": 0.050572467323590796
+    },
+    "sim_hold": {
+     "bets": 1,
+     "profit": -1.0,
+     "roi": -1.0,
+     "roi_se": null,
+     "roi_avg_odds": -1.0,
+     "roi_taxed": -1.0,
+     "hit_rate": 0.0,
+     "avg_price": 3.0,
+     "clv": 0.0,
+     "ev_close": 0.14730252255569898
+    },
+    "markets": {
+     "h2h": {
+      "market": "h2h",
+      "n_tune": 1612,
+      "n_hold": 387,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 0.97982,
+       "0.05": 0.98043,
+       "0.1": 0.98111,
+       "0.15": 0.98188,
+       "0.2": 0.98273,
+       "0.25": 0.98366,
+       "0.3": 0.98467,
+       "0.35": 0.98577,
+       "0.4": 0.98696,
+       "0.45": 0.98823,
+       "0.5": 0.98959,
+       "0.55": 0.99104,
+       "0.6": 0.99259,
+       "0.65": 0.99424,
+       "0.7": 0.996,
+       "0.75": 0.99787,
+       "0.8": 0.99985,
+       "0.85": 1.00196,
+       "0.9": 1.0042,
+       "0.95": 1.0066,
+       "1.0": 1.00917
+      },
+      "hw_scale": 0.893,
+      "tune": {
+       "logloss_model": 1.0091695167613457,
+       "logloss_market": 0.9798174977434078,
+       "logloss_blend": 0.9798174977434078,
+       "brier_model": 0.6026908819131475,
+       "brier_market": 0.5827904670515909,
+       "brier_blend": 0.5827904670515909,
+       "rps_model": 0.2068227325300435,
+       "rps_market": 0.1984081140824317,
+       "rps_blend": 0.1984081140824317
+      },
+      "hold": {
+       "logloss_model": 1.0189702731429777,
+       "logloss_market": 0.9550136640052065,
+       "logloss_blend": 0.9550136640052065,
+       "brier_model": 0.5928891183339373,
+       "brier_market": 0.5648485126949842,
+       "brier_blend": 0.5648485126949842,
+       "rps_model": 0.2039420752045028,
+       "rps_market": 0.19313506380829418,
+       "rps_blend": 0.19313506380829418
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.06070662409329327,
+        "observed": 0.2127659574468085,
+        "count": 47
+       },
+       {
+        "predicted": 0.1601975158892674,
+        "observed": 0.1566265060240964,
+        "count": 166
+       },
+       {
+        "predicted": 0.25134835856038046,
+        "observed": 0.2331002331002331,
+        "count": 429
+       },
+       {
+        "predicted": 0.34465850158991307,
+        "observed": 0.3631578947368421,
+        "count": 190
+       },
+       {
+        "predicted": 0.450828432193625,
+        "observed": 0.44776119402985076,
+        "count": 134
+       },
+       {
+        "predicted": 0.5495414442092108,
+        "observed": 0.5340909090909091,
+        "count": 88
+       },
+       {
+        "predicted": 0.6386541046039875,
+        "observed": 0.7049180327868853,
+        "count": 61
+       },
+       {
+        "predicted": 0.7460374868564299,
+        "observed": 0.7407407407407407,
+        "count": 27
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.07269519719116369,
+        "observed": 0.06976744186046512,
+        "count": 43
+       },
+       {
+        "predicted": 0.1598909286057284,
+        "observed": 0.12738853503184713,
+        "count": 157
+       },
+       {
+        "predicted": 0.25119774409179757,
+        "observed": 0.25054945054945055,
+        "count": 455
+       },
+       {
+        "predicted": 0.3478864084952997,
+        "observed": 0.2947976878612717,
+        "count": 173
+       },
+       {
+        "predicted": 0.4465633850479915,
+        "observed": 0.4965986394557823,
+        "count": 147
+       },
+       {
+        "predicted": 0.5484248615679678,
+        "observed": 0.5903614457831325,
+        "count": 83
+       },
+       {
+        "predicted": 0.6497009459482936,
+        "observed": 0.7457627118644068,
+        "count": 59
+       },
+       {
+        "predicted": 0.7513453572533548,
+        "observed": 0.75,
+        "count": 28
+       }
+      ],
+      "sim_hold": {
+       "bets": 1,
+       "profit": -1.0,
+       "roi": -1.0,
+       "roi_se": null,
+       "roi_avg_odds": -1.0,
+       "roi_taxed": -1.0,
+       "hit_rate": 0.0,
+       "avg_price": 3.0,
+       "clv": 0.0,
+       "ev_close": 0.14730252255569898
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     },
+     "totals": {
+      "market": "totals",
+      "n_tune": 1612,
+      "n_hold": 387,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 0.65289,
+       "0.05": 0.65297,
+       "0.1": 0.65313,
+       "0.15": 0.65335,
+       "0.2": 0.65365,
+       "0.25": 0.65401,
+       "0.3": 0.65445,
+       "0.35": 0.65496,
+       "0.4": 0.65554,
+       "0.45": 0.6562,
+       "0.5": 0.65693,
+       "0.55": 0.65775,
+       "0.6": 0.65864,
+       "0.65": 0.65962,
+       "0.7": 0.66069,
+       "0.75": 0.66185,
+       "0.8": 0.66311,
+       "0.85": 0.66448,
+       "0.9": 0.66596,
+       "0.95": 0.66757,
+       "1.0": 0.66934
+      },
+      "hw_scale": 1.043,
+      "tune": {
+       "logloss_model": 0.6693424579416408,
+       "logloss_market": 0.6528879981489452,
+       "logloss_blend": 0.6528879981489452,
+       "brier_model": 0.47479275440616603,
+       "brier_market": 0.46097271170431675,
+       "brier_blend": 0.46097271170431675
+      },
+      "hold": {
+       "logloss_model": 0.6700779986320864,
+       "logloss_market": 0.6291681785974107,
+       "logloss_blend": 0.6291681785974107,
+       "brier_model": 0.4722040968427268,
+       "brier_market": 0.43963373884077783,
+       "brier_blend": 0.43963373884077783
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.2612032601629894,
+        "observed": 0.28125,
+        "count": 64
+       },
+       {
+        "predicted": 0.3559718645565404,
+        "observed": 0.4266666666666667,
+        "count": 150
+       },
+       {
+        "predicted": 0.44954467008186716,
+        "observed": 0.40939597315436244,
+        "count": 149
+       },
+       {
+        "predicted": 0.5504553299181328,
+        "observed": 0.5906040268456376,
+        "count": 149
+       },
+       {
+        "predicted": 0.6440281354434596,
+        "observed": 0.5733333333333334,
+        "count": 150
+       },
+       {
+        "predicted": 0.7387967398370106,
+        "observed": 0.71875,
+        "count": 64
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.2624351091390202,
+        "observed": 0.20754716981132076,
+        "count": 53
+       },
+       {
+        "predicted": 0.35727329881565434,
+        "observed": 0.30538922155688625,
+        "count": 167
+       },
+       {
+        "predicted": 0.4484345623378795,
+        "observed": 0.4713375796178344,
+        "count": 157
+       },
+       {
+        "predicted": 0.5502915523118022,
+        "observed": 0.535031847133758,
+        "count": 157
+       },
+       {
+        "predicted": 0.6424723755820578,
+        "observed": 0.6904761904761905,
+        "count": 168
+       },
+       {
+        "predicted": 0.7375648908609798,
+        "observed": 0.7924528301886793,
+        "count": 53
+       }
+      ],
+      "sim_hold": {
+       "bets": 0,
+       "roi": null,
+       "roi_se": null,
+       "roi_avg_odds": null,
+       "roi_taxed": null,
+       "hit_rate": null,
+       "avg_price": null,
+       "clv": null,
+       "ev_close": null,
+       "profit": 0.0
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     }
+    },
+    "status": "validating"
+   },
+   "ekstraklasa": {
+    "rows_tune": 1553,
+    "rows_hold": 430,
+    "seasons": [
+     "2019",
+     "2020",
+     "2021",
+     "2022",
+     "2023",
+     "2024",
+     "2025",
+     "2026"
+    ],
+    "ref_sources": [
+     "AvgC",
+     "BFEC",
+     "PSC"
+    ],
+    "closing_only": true,
+    "min_ev": 0.02,
+    "max_disagreement": 0.12,
+    "threshold_grid": [
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.05,
+      "bets": 30,
+      "roi": 0.07466666666666665,
+      "roi_se": 0.23210319411913855
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.08,
+      "bets": 39,
+      "roi": 0.02102564102564102,
+      "roi_se": 0.20160014234024054
+     },
+     {
+      "min_ev": 0.02,
+      "max_disagreement": 0.12,
+      "bets": 49,
+      "roi": -0.055714285714285716,
+      "roi_se": 0.17409972511671087
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.05,
+      "bets": 30,
+      "roi": 0.07466666666666665,
+      "roi_se": 0.23210319411913855
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.08,
+      "bets": 39,
+      "roi": 0.02102564102564102,
+      "roi_se": 0.20160014234024054
+     },
+     {
+      "min_ev": 0.03,
+      "max_disagreement": 0.12,
+      "bets": 49,
+      "roi": -0.055714285714285716,
+      "roi_se": 0.17409972511671087
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.05,
+      "bets": 30,
+      "roi": 0.07466666666666665,
+      "roi_se": 0.23210319411913855
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.08,
+      "bets": 39,
+      "roi": 0.02102564102564102,
+      "roi_se": 0.20160014234024054
+     },
+     {
+      "min_ev": 0.04,
+      "max_disagreement": 0.12,
+      "bets": 49,
+      "roi": -0.055714285714285716,
+      "roi_se": 0.17409972511671087
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.05,
+      "bets": 30,
+      "roi": 0.07466666666666665,
+      "roi_se": 0.23210319411913855
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.08,
+      "bets": 39,
+      "roi": 0.02102564102564102,
+      "roi_se": 0.20160014234024054
+     },
+     {
+      "min_ev": 0.05,
+      "max_disagreement": 0.12,
+      "bets": 49,
+      "roi": -0.055714285714285716,
+      "roi_se": 0.17409972511671087
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.05,
+      "bets": 19,
+      "roi": 0.21105263157894735,
+      "roi_se": 0.3049915105105933
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.08,
+      "bets": 26,
+      "roi": 0.17653846153846153,
+      "roi_se": 0.2573910178982059
+     },
+     {
+      "min_ev": 0.06,
+      "max_disagreement": 0.12,
+      "bets": 32,
+      "roi": 0.079375,
+      "roi_se": 0.22363967702786783
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.05,
+      "bets": 13,
+      "roi": 0.40076923076923077,
+      "roi_se": 0.37886378977563406
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.08,
+      "bets": 16,
+      "roi": 0.611875,
+      "roi_se": 0.3272578223536707
+     },
+     {
+      "min_ev": 0.08,
+      "max_disagreement": 0.12,
+      "bets": 18,
+      "roi": 0.5505555555555556,
+      "roi_se": 0.305141638838567
+     }
+    ],
+    "sim_tune": {
+     "bets": 49,
+     "profit": -2.73,
+     "roi": -0.055714285714285716,
+     "roi_se": 0.17409972511671087,
+     "roi_avg_odds": -0.15673469387755104,
+     "roi_taxed": -0.16902857142857144,
+     "hit_rate": 0.3877551020408163,
+     "avg_price": 2.4306122448979592,
+     "clv": 0.0,
+     "ev_close": 0.07419785823387014
+    },
+    "sim_hold": {
+     "bets": 4,
+     "profit": 2.9399999999999995,
+     "roi": 0.7349999999999999,
+     "roi_se": 0.597501743372631,
+     "roi_avg_odds": 0.6224999999999999,
+     "roi_taxed": 0.5267999999999999,
+     "hit_rate": 0.75,
+     "avg_price": 2.385,
+     "clv": 0.0,
+     "ev_close": 0.09455212146788655
+    },
+    "markets": {
+     "h2h": {
+      "market": "h2h",
+      "n_tune": 1553,
+      "n_hold": 430,
+      "weight": 0.0,
+      "weight_curve": {
+       "0.0": 1.02975,
+       "0.05": 1.03013,
+       "0.1": 1.03065,
+       "0.15": 1.03128,
+       "0.2": 1.03204,
+       "0.25": 1.03293,
+       "0.3": 1.03394,
+       "0.35": 1.03507,
+       "0.4": 1.03634,
+       "0.45": 1.03774,
+       "0.5": 1.03928,
+       "0.55": 1.04096,
+       "0.6": 1.04279,
+       "0.65": 1.04477,
+       "0.7": 1.04693,
+       "0.75": 1.04927,
+       "0.8": 1.05181,
+       "0.85": 1.05459,
+       "0.9": 1.05765,
+       "0.95": 1.06109,
+       "1.0": 1.06522
+      },
+      "hw_scale": 0.951,
+      "tune": {
+       "logloss_model": 1.0652245246707814,
+       "logloss_market": 1.0297453715252736,
+       "logloss_blend": 1.0297453715252736,
+       "brier_model": 0.640051871299003,
+       "brier_market": 0.6193788009275453,
+       "brier_blend": 0.6193788009275453,
+       "rps_model": 0.220491134545164,
+       "rps_market": 0.21121161062069405,
+       "rps_blend": 0.21121161062069405
+      },
+      "hold": {
+       "logloss_model": 1.0804989085186303,
+       "logloss_market": 1.044866974245127,
+       "logloss_blend": 1.044866974245127,
+       "brier_model": 0.6444659957909237,
+       "brier_market": 0.628355651438635,
+       "brier_blend": 0.628355651438635,
+       "rps_model": 0.22503402427376032,
+       "rps_market": 0.21795701324006342,
+       "rps_blend": 0.21795701324006342
+      },
+      "boot": {
+       "delta": 0.0,
+       "p_better": 0.0,
+       "lo": 0.0,
+       "hi": 0.0
+      },
+      "calib_raw": [
+       {
+        "predicted": 0.1639343671438183,
+        "observed": 0.26548672566371684,
+        "count": 113
+       },
+       {
+        "predicted": 0.25650178965100495,
+        "observed": 0.27476635514018694,
+        "count": 535
+       },
+       {
+        "predicted": 0.3426700547503189,
+        "observed": 0.3003533568904594,
+        "count": 283
+       },
+       {
+        "predicted": 0.4467066520178527,
+        "observed": 0.41237113402061853,
+        "count": 194
+       },
+       {
+        "predicted": 0.5442287952811754,
+        "observed": 0.5957446808510638,
+        "count": 94
+       },
+       {
+        "predicted": 0.6396689620105728,
+        "observed": 0.5111111111111111,
+        "count": 45
+       }
+      ],
+      "calib_blend": [
+       {
+        "predicted": 0.1680471546377118,
+        "observed": 0.23076923076923078,
+        "count": 78
+       },
+       {
+        "predicted": 0.2611005455413887,
+        "observed": 0.24361158432708688,
+        "count": 587
+       },
+       {
+        "predicted": 0.34371007885048105,
+        "observed": 0.3624161073825503,
+        "count": 298
+       },
+       {
+        "predicted": 0.44700588308675415,
+        "observed": 0.4405940594059406,
+        "count": 202
+       },
+       {
+        "predicted": 0.5439169031251684,
+        "observed": 0.6022727272727273,
+        "count": 88
+       },
+       {
+        "predicted": 0.6366173849647299,
+        "observed": 0.5517241379310345,
+        "count": 29
+       }
+      ],
+      "sim_hold": {
+       "bets": 4,
+       "profit": 2.9399999999999995,
+       "roi": 0.7349999999999999,
+       "roi_se": 0.597501743372631,
+       "roi_avg_odds": 0.6224999999999999,
+       "roi_taxed": 0.5267999999999999,
+       "hit_rate": 0.75,
+       "avg_price": 2.385,
+       "clv": 0.0,
+       "ev_close": 0.09455212146788655
+      },
+      "status": "validating",
+      "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+     }
+    },
+    "status": "validating"
+   }
+  },
+  "skipped": []
+ },
+ "nba": {
+  "rows_tune": 8945,
+  "rows_hold": 1988,
+  "seasons": [
+   "2019-2020",
+   "2020-2021",
+   "2021-2022",
+   "2022-2023"
+  ],
+  "ref_sources": [
+   "SBR"
+  ],
+  "closing_only": false,
+  "min_ev": 0.02,
+  "max_disagreement": 0.12,
+  "threshold_grid": [
+   {
+    "min_ev": 0.02,
+    "max_disagreement": 0.05,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.02,
+    "max_disagreement": 0.08,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.02,
+    "max_disagreement": 0.12,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.03,
+    "max_disagreement": 0.05,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.03,
+    "max_disagreement": 0.08,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.03,
+    "max_disagreement": 0.12,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.04,
+    "max_disagreement": 0.05,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.04,
+    "max_disagreement": 0.08,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.04,
+    "max_disagreement": 0.12,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.05,
+    "max_disagreement": 0.05,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.05,
+    "max_disagreement": 0.08,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.05,
+    "max_disagreement": 0.12,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.06,
+    "max_disagreement": 0.05,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.06,
+    "max_disagreement": 0.08,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.06,
+    "max_disagreement": 0.12,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.08,
+    "max_disagreement": 0.05,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.08,
+    "max_disagreement": 0.08,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   },
+   {
+    "min_ev": 0.08,
+    "max_disagreement": 0.12,
+    "bets": 0,
+    "roi": null,
+    "roi_se": null
+   }
+  ],
+  "sim_tune": {
+   "bets": 0,
+   "roi": null,
+   "roi_se": null,
+   "roi_avg_odds": null,
+   "roi_taxed": null,
+   "hit_rate": null,
+   "avg_price": null,
+   "clv": null,
+   "ev_close": null,
+   "profit": 0.0
+  },
+  "sim_hold": {
+   "bets": 0,
+   "roi": null,
+   "roi_se": null,
+   "roi_avg_odds": null,
+   "roi_taxed": null,
+   "hit_rate": null,
+   "avg_price": null,
+   "clv": null,
+   "ev_close": null,
+   "profit": 0.0
+  },
+  "markets": {
+   "h2h": {
+    "market": "h2h",
+    "n_tune": 2983,
+    "n_hold": 664,
+    "weight": 0.0,
+    "weight_curve": {
+     "0.0": 0.61567,
+     "0.05": 0.61568,
+     "0.1": 0.61584,
+     "0.15": 0.61613,
+     "0.2": 0.61655,
+     "0.25": 0.6171,
+     "0.3": 0.61777,
+     "0.35": 0.61855,
+     "0.4": 0.61946,
+     "0.45": 0.62047,
+     "0.5": 0.6216,
+     "0.55": 0.62285,
+     "0.6": 0.6242,
+     "0.65": 0.62567,
+     "0.7": 0.62725,
+     "0.75": 0.62894,
+     "0.8": 0.63075,
+     "0.85": 0.63267,
+     "0.9": 0.63471,
+     "0.95": 0.63687,
+     "1.0": 0.63914
+    },
+    "hw_scale": 1.214,
+    "tune": {
+     "logloss_model": 0.6391427692391004,
+     "logloss_market": 0.6156678639378266,
+     "logloss_blend": 0.6156678639378266,
+     "brier_model": 0.44770504417044216,
+     "brier_market": 0.42714225102588366,
+     "brier_blend": 0.42714225102588366
+    },
+    "hold": {
+     "logloss_model": 0.6473473356281558,
+     "logloss_market": 0.6389800873187346,
+     "logloss_blend": 0.6389800873187346,
+     "brier_model": 0.45478476146000035,
+     "brier_market": 0.44684566465924547,
+     "brier_blend": 0.44684566465924547
+    },
+    "boot": {
+     "delta": 0.0,
+     "p_better": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "calib_raw": [
+     {
+      "predicted": 0.16582771779470615,
+      "observed": 0.26666666666666666,
+      "count": 30
+     },
+     {
+      "predicted": 0.25486981399767406,
+      "observed": 0.25833333333333336,
+      "count": 120
+     },
+     {
+      "predicted": 0.3501791603890684,
+      "observed": 0.35398230088495575,
+      "count": 226
+     },
+     {
+      "predicted": 0.4499966159913785,
+      "observed": 0.3923611111111111,
+      "count": 288
+     },
+     {
+      "predicted": 0.5500033840086215,
+      "observed": 0.6076388888888888,
+      "count": 288
+     },
+     {
+      "predicted": 0.6498208396109316,
+      "observed": 0.6460176991150443,
+      "count": 226
+     },
+     {
+      "predicted": 0.745130186002326,
+      "observed": 0.7416666666666667,
+      "count": 120
+     },
+     {
+      "predicted": 0.8341722822052939,
+      "observed": 0.7333333333333333,
+      "count": 30
+     }
+    ],
+    "calib_blend": [
+     {
+      "predicted": 0.16636402628920768,
+      "observed": 0.2647058823529412,
+      "count": 68
+     },
+     {
+      "predicted": 0.2548699352629109,
+      "observed": 0.2517482517482518,
+      "count": 143
+     },
+     {
+      "predicted": 0.35350687552083193,
+      "observed": 0.3776824034334764,
+      "count": 233
+     },
+     {
+      "predicted": 0.4472998936222908,
+      "observed": 0.42105263157894735,
+      "count": 209
+     },
+     {
+      "predicted": 0.5476810486274512,
+      "observed": 0.5714285714285714,
+      "count": 231
+     },
+     {
+      "predicted": 0.6464931244791681,
+      "observed": 0.6223175965665236,
+      "count": 233
+     },
+     {
+      "predicted": 0.7451300647370892,
+      "observed": 0.7482517482517482,
+      "count": 143
+     },
+     {
+      "predicted": 0.8336359737107922,
+      "observed": 0.7352941176470589,
+      "count": 68
+     }
+    ],
+    "sim_hold": {
+     "bets": 0,
+     "roi": null,
+     "roi_se": null,
+     "roi_avg_odds": null,
+     "roi_taxed": null,
+     "hit_rate": null,
+     "avg_price": null,
+     "clv": null,
+     "ev_close": null,
+     "profit": 0.0
+    },
+    "status": "validating",
+    "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+   },
+   "spreads": {
+    "market": "spreads",
+    "n_tune": 2981,
+    "n_hold": 662,
+    "weight": 0.0,
+    "weight_curve": {
+     "0.0": 0.69315,
+     "0.05": 0.69342,
+     "0.1": 0.69379,
+     "0.15": 0.69427,
+     "0.2": 0.69484,
+     "0.25": 0.69553,
+     "0.3": 0.69631,
+     "0.35": 0.69721,
+     "0.4": 0.69821,
+     "0.45": 0.69931,
+     "0.5": 0.70053,
+     "0.55": 0.70187,
+     "0.6": 0.70331,
+     "0.65": 0.70488,
+     "0.7": 0.70657,
+     "0.75": 0.70838,
+     "0.8": 0.71033,
+     "0.85": 0.71241,
+     "0.9": 0.71464,
+     "0.95": 0.71702,
+     "1.0": 0.71956
+    },
+    "hw_scale": 1.214,
+    "tune": {
+     "logloss_model": 0.7195599034452265,
+     "logloss_market": 0.6931471805599453,
+     "logloss_blend": 0.6931471805599453,
+     "brier_model": 0.5248156707546434,
+     "brier_market": 0.5,
+     "brier_blend": 0.5
+    },
+    "hold": {
+     "logloss_model": 0.7120206155933007,
+     "logloss_market": 0.6931471805599453,
+     "logloss_blend": 0.6931471805599453,
+     "brier_model": 0.5178077490940038,
+     "brier_market": 0.5,
+     "brier_blend": 0.5
+    },
+    "boot": {
+     "delta": 0.0,
+     "p_better": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "calib_raw": [
+     {
+      "predicted": 0.2682232518314407,
+      "observed": 0.4146341463414634,
+      "count": 41
+     },
+     {
+      "predicted": 0.3622153617907781,
+      "observed": 0.5170454545454546,
+      "count": 176
+     },
+     {
+      "predicted": 0.45413339498313443,
+      "observed": 0.49417249417249415,
+      "count": 429
+     },
+     {
+      "predicted": 0.5458666050168656,
+      "observed": 0.5058275058275058,
+      "count": 429
+     },
+     {
+      "predicted": 0.6377846382092218,
+      "observed": 0.48295454545454547,
+      "count": 176
+     },
+     {
+      "predicted": 0.7317767481685592,
+      "observed": 0.5853658536585366,
+      "count": 41
+     }
+    ],
+    "calib_blend": [
+     {
+      "predicted": 0.5,
+      "observed": 0.5,
+      "count": 1298
+     }
+    ],
+    "sim_hold": {
+     "bets": 0,
+     "roi": null,
+     "roi_se": null,
+     "roi_avg_odds": null,
+     "roi_taxed": null,
+     "hit_rate": null,
+     "avg_price": null,
+     "clv": null,
+     "ev_close": null,
+     "profit": 0.0
+    },
+    "status": "validating",
+    "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+   },
+   "totals": {
+    "market": "totals",
+    "n_tune": 2981,
+    "n_hold": 662,
+    "weight": 0.0,
+    "weight_curve": {
+     "0.0": 0.69315,
+     "0.05": 0.69353,
+     "0.1": 0.69401,
+     "0.15": 0.69459,
+     "0.2": 0.69527,
+     "0.25": 0.69606,
+     "0.3": 0.69694,
+     "0.35": 0.69794,
+     "0.4": 0.69904,
+     "0.45": 0.70025,
+     "0.5": 0.70156,
+     "0.55": 0.70299,
+     "0.6": 0.70454,
+     "0.65": 0.7062,
+     "0.7": 0.70798,
+     "0.75": 0.70989,
+     "0.8": 0.71192,
+     "0.85": 0.71408,
+     "0.9": 0.71638,
+     "0.95": 0.71883,
+     "1.0": 0.72142
+    },
+    "hw_scale": 1.203,
+    "tune": {
+     "logloss_model": 0.7214220841215079,
+     "logloss_market": 0.6931471805599453,
+     "logloss_blend": 0.6931471805599453,
+     "brier_model": 0.526656023160236,
+     "brier_market": 0.5,
+     "brier_blend": 0.5
+    },
+    "hold": {
+     "logloss_model": 0.7240260855924527,
+     "logloss_market": 0.6931471805599454,
+     "logloss_blend": 0.6931471805599454,
+     "brier_model": 0.5297503829287521,
+     "brier_market": 0.5,
+     "brier_blend": 0.5
+    },
+    "boot": {
+     "delta": 0.0,
+     "p_better": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "calib_raw": [
+     {
+      "predicted": 0.36176551326689416,
+      "observed": 0.5764705882352941,
+      "count": 170
+     },
+     {
+      "predicted": 0.45271528686314644,
+      "observed": 0.5116772823779193,
+      "count": 471
+     },
+     {
+      "predicted": 0.5472847131368536,
+      "observed": 0.4883227176220807,
+      "count": 471
+     },
+     {
+      "predicted": 0.6382344867331059,
+      "observed": 0.4235294117647059,
+      "count": 170
+     }
+    ],
+    "calib_blend": [
+     {
+      "predicted": 0.5,
+      "observed": 0.5,
+      "count": 1306
+     }
+    ],
+    "sim_hold": {
+     "bets": 0,
+     "roi": null,
+     "roi_se": null,
+     "roi_avg_odds": null,
+     "roi_taxed": null,
+     "hit_rate": null,
+     "avg_price": null,
+     "clv": null,
+     "ev_close": null,
+     "profit": 0.0
+    },
+    "status": "validating",
+    "reason": "optymalna waga modelu 0.00 — rynek bez marży prognozuje lepiej"
+   }
+  },
+  "status": "validating",
+  "sigma_check": {
+   "margin_within_1sigma": 0.693,
+   "total_within_1sigma": 0.693,
+   "margin_z_sd": 0.984,
+   "total_z_sd": 1.007,
+   "total_bias": 3.23
+  },
+  "xi_grid": {
+   "0.004": 0.64255,
+   "0.008": 0.63914,
+   "0.015": 0.64146
+  },
+  "xi": 0.008,
+  "skipped": [],
+  "games": 4301,
+  "price_note": "spread/total: -110 (1.909) assumed"
+ },
+ "cups": {
+  "cup_matches": 2639,
+  "teams": 682,
+  "domestic_matches": 26504,
+  "skipped": [],
+  "validation": {
+   "season": "2024/25 (wszystkie fazy, model z danych sprzed 1.07.2024)",
+   "matches": 431,
+   "logloss_model": 0.9994,
+   "logloss_baseline": 1.0324,
+   "baseline": "częstości 1/X/2 z meczów pucharowych 2022-2024",
+   "calibration": [
+    {
+     "predicted": 0.065,
+     "observed": 0.043,
+     "count": 47
+    },
+    {
+     "predicted": 0.163,
+     "observed": 0.22,
+     "count": 186
+    },
+    {
+     "predicted": 0.246,
+     "observed": 0.241,
+     "count": 485
+    },
+    {
+     "predicted": 0.345,
+     "observed": 0.347,
+     "count": 190
+    },
+    {
+     "predicted": 0.446,
+     "observed": 0.5,
+     "count": 162
+    },
+    {
+     "predicted": 0.55,
+     "observed": 0.418,
+     "count": 110
+    },
+    {
+     "predicted": 0.644,
+     "observed": 0.635,
+     "count": 63
+    },
+    {
+     "predicted": 0.746,
+     "observed": 0.706,
+     "count": 34
+    }
+   ]
+  }
+ }
+}
