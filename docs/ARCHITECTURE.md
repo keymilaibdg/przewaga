@@ -25,7 +25,7 @@ Status dokumentu: wersja 3 (2026-11-17, wariant bezkosztowy, aplikacja APK). Wsz
 
 ### 1a. Konsekwencje wariantu darmowego
 
-- **Częstotliwość aktualizacji ogranicza darmowy limit danych, nie hosting.** API-Football Free: 100 zapytań/dzień. The Odds API Starter: 500 kredytów/mies. (zapytanie = rynki × regiony). W praktyce kursy odświeżane są 1–3 razy dziennie dla wybranych lig, a nie co kilka minut.
+- **Częstotliwość aktualizacji ogranicza darmowy limit danych, nie hosting.** football-data.org Free: 10 zapytań/min, bieżący sezon; balldontlie Free: 5 zapytań/min. The Odds API Starter: 500 kredytów/mies. (zapytanie = rynki × regiony). W praktyce kursy odświeżane są 1–3 razy dziennie dla wybranych lig, a nie co kilka minut.
 - **Zakres lig (decyzja użytkownika):** Premier League, La Liga, Bundesliga, Liga Mistrzów, Liga Europy, Ekstraklasa, NBA, Euroliga. Pokrycie kursami w darmowym planie do potwierdzenia przy pierwszym uruchomieniu.
 - **xG i polscy bukmacherzy:** brak w darmowych planach albo niezweryfikowane. Model działa na bramkach i statystykach, a aplikacja wyraźnie pokazuje brak xG.
 - **Offline:** aplikacja przechowuje ostatnie pobrane dane i oznacza je jako „Offline”. Nie przełącza się po cichu na dane DEMO.
@@ -46,7 +46,8 @@ przewaga/
 │   ├── capacitor.config.json konfiguracja aplikacji Android; assets/ = ikony i ekran startowy
 │   └── tests/e2e/            testy Playwright: DEMO, live, APK, układ ekranów
 ├── pipeline/                 Python uruchamiany w GitHub Actions
-│   ├── app/providers/        API-Football, API-Basketball, The Odds API, klient HTTP z budżetem
+│   ├── app/providers/        football-data.org, football-data.co.uk (CSV), balldontlie, The Odds API, klient HTTP z budżetem; API-SPORTS tylko do backtestów 2022–2024
+│   ├── app/teams.py          jedna tożsamość drużyny między źródłami (tabela team_aliases)
 │   ├── app/ingest.py         zapis do SQLite (kursy append-only)
 │   ├── app/matching.py       dopasowanie meczów między źródłami
 │   ├── app/models/           Dixon–Coles (piłka), ratingi (koszykówka)
@@ -72,15 +73,17 @@ przewaga/
 - `backtest_run` / `backtest_bet` — fizycznie oddzielone od rekomendacji live.
 - `provider_status` (ostatnie wywołanie, błędy, zużycie limitu).
 
-## 4. Źródła danych (plan, **[DO WERYFIKACJI]** w ETAPIE 4)
+## 4. Źródła danych (od ETAPU 4)
 
-| Dane | Kandydat | Uwagi |
+| Dane | Źródło | Uwagi |
 |---|---|---|
-| Piłka: terminarze, wyniki, składy, kontuzje, statystyki | API-Football (api-sports.io) | Plan darmowy ma dzienny limit zapytań; płatne plany wymagane przy wielu ligach. |
+| Terminarze i wyniki: PL, La Liga, Bundesliga, Liga Mistrzów | football-data.org v4 | Free: bieżący sezon, 10 zapytań/min, wyniki z opóźnieniem. |
+| Historia wyników do modelu (PL, La Liga, Bundesliga, Ekstraklasa) | football-data.co.uk CSV | Bez klucza; zawiera kursy zamknięcia Pinnacle (backtest w ETAPIE 5). |
+| NBA: mecze i wyniki | balldontlie | Free: 5 zapytań/min; pełny sezon raz, potem okno dat. |
+| Terminarz i wyniki: Liga Europy, Ekstraklasa, Euroliga | The Odds API `/events` (0 kredytów) i `/scores` (2 kredyty) | Wyniki pobierane tylko, gdy mecz na nie czeka. |
+| Składy, kontuzje | brak darmowego źródła | API-Football Free nie obsługuje bieżących sezonów (tylko 2022–2024). |
 | Piłka: xG | Sportmonks (płatne dodatki) lub inne licencjonowane źródło | Bez legalnego źródła xG rynek działa na bramkach, a aplikacja to pokazuje. |
 | Kursy (wiele bukmacherów) | The Odds API | Model kredytowy; trzeba sprawdzić, którzy bukmacherzy z PL są w pokryciu. |
-| NBA | balldontlie / oficjalne endpointy statystyk | Endpointy nieoficjalne bywają niestabilne i mają ograniczenia — do oceny. |
-| Euroliga / EuroCup | Publiczne API Euroligi | Do sprawdzenia zakres i warunki. |
 | STS, Fortuna, Superbet, Betclic | **Brak potwierdzonych publicznych API** | Integracja tylko przez legalne źródło (agregator z licencją). Scraping z naruszeniem regulaminu — wykluczony. Do czasu weryfikacji: UI pokazuje „niedostępne”. |
 
 Klucze API: wyłącznie w GitHub Secrets (lokalnie: `pipeline/.env`, poza repozytorium). Frontend nie zna żadnego klucza.

@@ -17,10 +17,10 @@ Czas: ok. 20–30 minut. Wszystko robisz raz. Potem aplikacja sama aktualizuje a
 4. Kliknij **Create repository**.
 5. Napisz mi nazwę swojego konta GitHub. Wgram cały kod do repozytorium (poproszę o potwierdzenie dostępu).
 
-## Krok 2. Klucz API-Football
-1. Wejdź na **dashboard.api-football.com** i zarejestruj się (plan Free, bez karty).
-2. Potwierdź adres e-mail.
-3. W panelu: **Account → My Access**. Skopiuj klucz (długi ciąg znaków).
+## Krok 2. Klucze football-data.org i balldontlie
+1. **football-data.org**: wejdź na **football-data.org/client/register**, zarejestruj się (plan Free). Klucz przyjdzie mailem.
+2. **balldontlie**: wejdź na **app.balldontlie.io**, zarejestruj się (plan Free). Klucz jest w panelu (Account → API Key).
+3. Historia wyników z **football-data.co.uk** nie wymaga klucza.
 
 ## Krok 3. Klucz The Odds API
 1. Wejdź na **the-odds-api.com** i w sekcji planów wybierz **Starter (FREE)** → **START**.
@@ -31,7 +31,8 @@ W repozytorium: **Settings → Secrets and variables → Actions → New reposit
 
 | Nazwa | Wartość |
 |---|---|
-| `APISPORTS_KEY` | klucz z kroku 2 |
+| `FOOTBALL_DATA_KEY` | klucz football-data.org z kroku 2 |
+| `BALLDONTLIE_KEY` | klucz balldontlie z kroku 2 |
 | `ODDS_API_KEY` | klucz z kroku 3 |
 | `ANDROID_KEYSTORE_PASSWORD` | 24-znakowe hasło z pliku `przewaga-podpis.txt` |
 
@@ -41,7 +42,7 @@ Sekrety są szyfrowane: nikt ich nie zobaczy, także w publicznym repozytorium.
 
 ## Krok 5. Pierwsze uruchomienie
 1. Zakładka **Actions**. Jeśli GitHub zapyta, kliknij „I understand my workflows, go ahead and enable them”.
-2. Po lewej wybierz **Aktualizacja danych** → **Run workflow** → **Run workflow**. Trwa 1–3 minuty. Zielony znaczek oznacza sukces.
+2. Po lewej wybierz **Aktualizacja danych** → **Run workflow** → **Run workflow**. Pierwsze uruchomienie trwa ok. 8 minut (pobiera dwa sezony NBA z limitem 5 zapytań na minutę), kolejne 1–3 minuty. Zielony znaczek oznacza sukces.
 3. Po lewej wybierz **Budowa aplikacji Android (APK)** → **Run workflow**. Trwa ok. 10 minut.
 
 ## Krok 6. Instalacja na telefonie

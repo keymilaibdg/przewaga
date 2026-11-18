@@ -16,21 +16,31 @@ class LeagueConfig:
     key: str
     name: str  # Polish display name
     sport: str  # "football" | "basketball"
-    country: str  # provider country name used for ID resolution
-    search: str  # provider league name used for ID resolution
+    country: str  # display country / region
     odds_key: str  # The Odds API sport key
-    known_id: int | None = None  # sanity hint; the ID is always verified at runtime
+    # Where upcoming fixtures and results come from:
+    #   "fdo"  football-data.org (fixtures + results, current season)
+    #   "bdl"  balldontlie (NBA games + results)
+    #   "odds" The Odds API: /events (free) for fixtures, /scores (2 credits) for results
+    fixtures_source: str
+    fdo_code: str | None = None  # football-data.org competition code
+    csv_file: str | None = None  # football-data.co.uk history: 'E0' (per-season file) or 'new/POL' (all seasons)
+    # Cups and the Euroleague: too little shared history in free sources -> show odds, never recommend (ETAP 5).
+    recommend: bool = True
+    # API-SPORTS lookup, used only by backtests on seasons 2022-2024 (the free plan has no current seasons).
+    search: str = ""
+    known_id: int | None = None
 
 
 LEAGUES: tuple[LeagueConfig, ...] = (
-    LeagueConfig("epl", "Premier League", "football", "England", "Premier League", "soccer_epl", 39),
-    LeagueConfig("laliga", "La Liga", "football", "Spain", "La Liga", "soccer_spain_la_liga", 140),
-    LeagueConfig("bundesliga", "Bundesliga", "football", "Germany", "Bundesliga", "soccer_germany_bundesliga", 78),
-    LeagueConfig("ucl", "Liga Mistrzów", "football", "World", "UEFA Champions League", "soccer_uefa_champs_league", 2),
-    LeagueConfig("uel", "Liga Europy", "football", "World", "UEFA Europa League", "soccer_uefa_europa_league", 3),
-    LeagueConfig("ekstraklasa", "Ekstraklasa", "football", "Poland", "Ekstraklasa", "soccer_poland_ekstraklasa", 106),
-    LeagueConfig("nba", "NBA", "basketball", "USA", "NBA", "basketball_nba", None),
-    LeagueConfig("euroleague", "Euroliga", "basketball", "Europe", "Euroleague", "basketball_euroleague", None),
+    LeagueConfig("epl", "Premier League", "football", "England", "soccer_epl", "fdo", "PL", "E0", search="Premier League", known_id=39),
+    LeagueConfig("laliga", "La Liga", "football", "Spain", "soccer_spain_la_liga", "fdo", "PD", "SP1", search="La Liga", known_id=140),
+    LeagueConfig("bundesliga", "Bundesliga", "football", "Germany", "soccer_germany_bundesliga", "fdo", "BL1", "D1", search="Bundesliga", known_id=78),
+    LeagueConfig("ucl", "Liga Mistrzów", "football", "Europe", "soccer_uefa_champs_league", "fdo", "CL", recommend=False, search="UEFA Champions League", known_id=2),
+    LeagueConfig("uel", "Liga Europy", "football", "Europe", "soccer_uefa_europa_league", "odds", recommend=False, search="UEFA Europa League", known_id=3),
+    LeagueConfig("ekstraklasa", "Ekstraklasa", "football", "Poland", "soccer_poland_ekstraklasa", "odds", csv_file="new/POL", search="Ekstraklasa", known_id=106),
+    LeagueConfig("nba", "NBA", "basketball", "USA", "basketball_nba", "bdl", search="NBA"),
+    LeagueConfig("euroleague", "Euroliga", "basketball", "Europe", "basketball_euroleague", "odds", recommend=False, search="Euroleague"),
 )
 
 LEAGUE_BY_KEY = {lg.key: lg for lg in LEAGUES}
@@ -48,8 +58,11 @@ MAX_ODDS_AGE_H = 14
 MAX_DISAGREEMENT = 0.12
 
 # ---- request budgets (free plans) ----
-API_SPORTS_DAILY_LIMIT = 100  # per API (football, basketball) per day
+API_SPORTS_DAILY_LIMIT = 100  # per API (football, basketball) per day (backtests only)
 API_SPORTS_RESERVE = 10  # never spend the last N requests
+FDO_DAILY_LIMIT = 60  # football-data.org: 10/min, no daily cap; we need ~4 calls per run
+CSV_DAILY_LIMIT = 20  # football-data.co.uk: 4-7 files per day
+BDL_DAILY_LIMIT = 80  # balldontlie: 5/min; a full season is ~13 pages
 ODDS_MONTHLY_CREDITS = 500
 ODDS_REGIONS = "eu"
 ODDS_MARKETS = {"football": "h2h,totals", "basketball": "h2h,spreads,totals"}

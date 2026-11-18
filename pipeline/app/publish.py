@@ -125,6 +125,14 @@ def form_json(rows: list[sqlite3.Row], tid: str) -> list[dict[str, Any]]:
     return out
 
 
+FIXTURES_PROVIDER = {"fdo": "football-data.org", "bdl": "balldontlie", "odds": "The Odds API"}
+
+
+def stats_provider(league_key: str) -> str:
+    lg = LEAGUE_BY_KEY[league_key]
+    return "football-data.co.uk" if lg.csv_file else FIXTURES_PROVIDER[lg.fixtures_source]
+
+
 def stats_json(sport: str, fh: list[dict], fa: list[dict], ea: EventAnalysis) -> list[dict[str, Any]]:
     def avg(xs: list[float]) -> float | None:
         return sum(xs) / len(xs) if xs else None
@@ -134,7 +142,7 @@ def stats_json(sport: str, fh: list[dict], fa: list[dict], ea: EventAnalysis) ->
 
     gf = lambda f: avg([x["scored"] for x in f])  # noqa: E731
     ga = lambda f: avg([x["conceded"] for x in f])  # noqa: E731
-    src = "API-SPORTS"
+    src = stats_provider(ea.event["league_key"])
     if sport == "football":
         lam_mu = ea.lam_mu or (None, None)
         return [
@@ -200,19 +208,22 @@ def event_json(conn: sqlite3.Connection, ea: EventAnalysis, now: datetime) -> di
     flags: list[str] = []
     if not ea.odds_fresh:
         flags.append("Kursy nieaktualne — rekomendacje wstrzymane" if ea.odds_updated else "Brak kursów dla tego meczu w darmowym planie")
-    if not ea.known:
+    if ea.market_only:
+        flags.append("Za mało wspólnej historii w darmowych źródłach dla tych rozgrywek — pokazujemy tylko kursy, bez rekomendacji")
+    elif not ea.known:
         flags.append("Za mało danych historycznych o jednej z drużyn — brak rekomendacji")
     if ev["sport"] == "football":
         flags.append("Brak xG w darmowym źródle — model oparty na bramkach")
     if absences is None:
-        flags.append("Brak danych o kontuzjach")
+        flags.append("Brak danych o kontuzjach w darmowych źródłach")
     inj_ts = conn.execute("SELECT MAX(fetched_at) AS t FROM injuries WHERE league_key = ?", (ev["league_key"],)).fetchone()["t"]
+    fixtures_provider = FIXTURES_PROVIDER[lg.fixtures_source]
     sources = [
-        {"kind": "fixtures", "provider": "API-SPORTS", "updatedAt": ev["updated_at"], "freshness": freshness(parse(ev["updated_at"]), now, 26)},
+        {"kind": "fixtures", "provider": fixtures_provider, "updatedAt": ev["updated_at"], "freshness": freshness(parse(ev["updated_at"]), now, 26)},
         {"kind": "odds", "provider": "The Odds API", "updatedAt": iso(ea.odds_updated) if ea.odds_updated else None, "freshness": freshness(ea.odds_updated, now, MAX_ODDS_AGE_H)},
-        {"kind": "stats", "provider": "API-SPORTS", "updatedAt": ev["updated_at"], "freshness": freshness(parse(ev["updated_at"]), now, 26)},
-        {"kind": "injuries", "provider": "API-Football", "updatedAt": inj_ts if absences is not None else None, "freshness": "fresh" if absences is not None else "missing"},
-        {"kind": "lineups", "provider": "API-Football", "updatedAt": None, "freshness": "missing"},
+        {"kind": "stats", "provider": stats_provider(lg.key), "updatedAt": ev["updated_at"], "freshness": freshness(parse(ev["updated_at"]), now, 26)},
+        {"kind": "injuries", "provider": "—", "updatedAt": inj_ts if absences is not None else None, "freshness": "fresh" if absences is not None else "missing"},
+        {"kind": "lineups", "provider": "—", "updatedAt": None, "freshness": "missing"},
     ]
     if ev["sport"] == "football":
         sources.append({"kind": "xg", "provider": "—", "updatedAt": None, "freshness": "missing"})
@@ -301,14 +312,19 @@ def notifications_json(conn: sqlite3.Connection, now: datetime) -> list[dict[str
 
 def provider_health(conn: sqlite3.Connection, configured: dict[str, bool]) -> list[dict[str, Any]]:
     meta = {
-        "api-football": ("API-Football", "Terminarze, wyniki, kontuzje (piłka)"),
-        "api-basketball": ("API-Basketball", "Terminarze i wyniki (NBA, Euroliga)"),
-        "the-odds-api": ("The Odds API", "Kursy bukmacherów (1X2, gole, handicap)"),
+        "football-data-org": ("football-data.org", "Terminarze i wyniki: Premier League, La Liga, Bundesliga, Liga Mistrzów"),
+        "football-data-csv": ("football-data.co.uk", "Historia wyników do modelu (PL, La Liga, Bundesliga, Ekstraklasa)"),
+        "balldontlie": ("balldontlie", "Mecze i wyniki NBA"),
+        "the-odds-api": ("The Odds API", "Kursy bukmacherów; terminarz i wyniki Ligi Europy, Ekstraklasy i Euroligi"),
     }
     out = []
     for pid, (name, purpose) in meta.items():
         last = conn.execute("SELECT * FROM provider_calls WHERE provider = ? AND http_status IS NOT NULL ORDER BY id DESC LIMIT 1", (pid,)).fetchone()
-        status = "not_configured" if not configured.get(pid) else ("connected" if last and last["ok"] else "error" if last else "not_configured")
+        # One missing CSV file must not mark the whole source as broken: connected if anything worked in this run.
+        ok_now = conn.execute(
+            "SELECT 1 FROM provider_calls WHERE provider = ? AND ok = 1 AND called_at >= COALESCE((SELECT MAX(started_at) FROM runs), '') LIMIT 1", (pid,)
+        ).fetchone()
+        status = "not_configured" if not configured.get(pid) else ("connected" if (last and last["ok"]) or ok_now else "error" if last else "not_configured")
         quota = f"pozostało {last['remaining']}" if last and last["remaining"] is not None else None
         out.append({"id": pid, "name": name, "purpose": purpose, "status": status, "lastSync": last["called_at"] if last else None, "quota": quota})
     out.append({"id": "pl-books", "name": "STS · Fortuna · Superbet · Betclic", "purpose": "Kursy polskich bukmacherów", "status": "unverified", "lastSync": None, "quota": None})

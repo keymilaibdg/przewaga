@@ -5,7 +5,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from .config import HORIZON_DAYS, LEAGUE_BY_KEY, MAX_ODDS_AGE_H, previous_season
+from .config import HORIZON_DAYS, LEAGUE_BY_KEY, MAX_ODDS_AGE_H, previous_season, season_for
 from .db import dumps
 from .engine.evaluate import Candidate, Context, Market, Quote, Selection, fmt_pct, price_market
 from .engine.odds import closing_line_value
@@ -31,18 +31,21 @@ def signed(x: float) -> str:
 # ---------------- models ----------------
 
 def fit_models(conn: sqlite3.Connection, now: datetime) -> dict[str, DixonColes | Ratings]:
+    """One model per league that may recommend, fitted on the current and the previous season."""
     models: dict[str, DixonColes | Ratings] = {}
     for key, lg in LEAGUE_BY_KEY.items():
-        row = conn.execute("SELECT season FROM leagues WHERE key = ?", (key,)).fetchone()
-        if not row:
-            continue
-        seasons = (row["season"], previous_season(lg.sport, row["season"]))
+        if not lg.recommend:
+            continue  # cups / Euroleague: odds only (see analyse_event)
+        cur = season_for(lg.sport, now)
+        seasons = (cur, previous_season(lg.sport, cur))
         rows = conn.execute(
             f"""SELECT home_team_id, away_team_id, home_score, away_score, kickoff FROM events
                 WHERE league_key = ? AND season IN (?, ?) AND status = 'finished'
                 AND home_score IS NOT NULL AND away_score IS NOT NULL AND kickoff < ?""",
             (key, *seasons, iso(now)),
         ).fetchall()
+        if not rows:
+            continue
         age = lambda r: (now - parse(r["kickoff"])).total_seconds() / 86400  # noqa: E731
         if lg.sport == "football":
             models[key] = DixonColes.fit([Match(r["home_team_id"], r["away_team_id"], r["home_score"], r["away_score"], age(r)) for r in rows])
@@ -84,18 +87,22 @@ class EventAnalysis:
     odds_updated: datetime | None = None
     completeness: float = 0.0
     known: bool = False
+    market_only: bool = False  # no model for this competition: odds are shown, nothing is recommended
+
+
+MARKET_ONLY_VERDICT = "Brak modelu dla tych rozgrywek — pokazujemy tylko kursy rynku (prawdopodobieństwo = rynek bez marży)."
 
 
 def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes | Ratings | None, now: datetime) -> EventAnalysis:
     a = EventAnalysis(event=ev)
-    if model is None:
-        return a
     h, w = ev["home_team_id"], ev["away_team_id"]
     hn, an = ev["home_name"], ev["away_name"]
     quotes, history = latest_quotes(conn, ev["id"])
     times = [q.captured_at for qs in quotes.values() for q in qs]
     a.odds_updated = max(times) if times else None
     a.odds_fresh = bool(a.odds_updated and now - a.odds_updated <= timedelta(hours=MAX_ODDS_AGE_H))
+    if model is None or not LEAGUE_BY_KEY[ev["league_key"]].recommend:
+        return market_only(a, quotes, history, now)
     a.known = model.known(h) and model.known(w)
     injuries_fetched = conn.execute("SELECT 1 FROM injuries WHERE league_key = ? AND fetched_at >= ? LIMIT 1", (ev["league_key"], iso(now - timedelta(hours=36)))).fetchone() is not None
     n_min = min(model.n_eff.get(h, 0.0), model.n_eff.get(w, 0.0))
@@ -140,6 +147,39 @@ def analyse_event(conn: sqlite3.Connection, ev: sqlite3.Row, model: DixonColes |
         a.candidates.extend(price_market(mk, hw, ctx))
     a.candidates.sort(key=lambda c: (c.quality, c.ev), reverse=True)
     a.candidates = a.candidates[:2]
+    return a
+
+
+def market_only(a: EventAnalysis, quotes: dict, history: dict, now: datetime) -> EventAnalysis:
+    """Markets priced by the market itself. Never produces candidates."""
+    ev = a.event
+    hn, an = ev["home_name"], ev["away_name"]
+    a.market_only, a.known = True, False
+    a.completeness = round((0.35 if a.odds_fresh else 0.0) + 0.1, 3)
+    ctx = Context(now=now, kickoff=parse(ev["kickoff"]), completeness=a.completeness, both_teams_known=False)
+    is_fb = ev["sport"] == "football"
+    unit = "gola" if is_fb else "pkt"
+
+    def sel(mkey: str, key: str, label: str, line: float | None) -> Selection:
+        return Selection(key, label, line, quotes.get((mkey, key, line), []), 0.0, history=history.get((mkey, key, line), []))
+
+    h2h = [("home", f"Wygrana {hn}"), ("draw", "Remis"), ("away", f"Wygrana {an}")] if is_fb else [("home", f"Wygrana {hn}"), ("away", f"Wygrana {an}")]
+    markets = [Market("h2h", "1X2" if is_fb else "Moneyline", None, [sel("h2h", k, lbl, None) for k, lbl in h2h])]
+    if not is_fb:
+        for line in sorted({k[2] for k in quotes if k[0] == "spreads" and k[1] == "home" and k[2] is not None}):
+            markets.append(Market("spreads", f"Handicap {signed(line)}", line, [sel("spreads", "home", f"{hn} {signed(line)}", line), Selection("away", f"{an} {signed(-line)}", -line, quotes.get(("spreads", "away", -line), []), 0.0, history=history.get(("spreads", "away", -line), []))]))
+    for line in sorted({k[2] for k in quotes if k[0] == "totals" and k[2] is not None}):
+        name = f"Gole: powyżej/poniżej {fmt_line(line)}" if is_fb else f"Punkty: powyżej/poniżej {fmt_line(line)}"
+        markets.append(Market("totals", name, line, [sel("totals", "over", f"Powyżej {fmt_line(line)} {unit}", line), sel("totals", "under", f"Poniżej {fmt_line(line)} {unit}", line)]))
+    for mk in markets:
+        if not all(s.quotes for s in mk.selections):
+            continue
+        price_market(mk, lambda p: 0.0, ctx)  # fills the margin-free market probabilities
+        for s in mk.selections:
+            s.raw_model_prob = s.fair_prob
+        price_market(mk, lambda p: 0.02, ctx)
+        mk.verdict = MARKET_ONLY_VERDICT
+        a.markets.append(mk)
     return a
 
 
