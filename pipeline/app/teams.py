@@ -8,16 +8,15 @@ from __future__ import annotations
 
 import re
 import sqlite3
-import unicodedata
 
-from .matching import similarity
+from .matching import ascii_fold, similarity
 from .providers.common import TeamRef
 
 MIN_SIMILARITY = 0.85
 
 
 def slug(name: str) -> str:
-    s = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower()
+    s = ascii_fold(name).lower()
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
 
 
@@ -54,8 +53,12 @@ def resolve(conn: sqlite3.Connection, league_key: str, source: str, ref: TeamRef
             "INSERT INTO teams(id, name, short_name, logo_url) VALUES (?,?,?,?) ON CONFLICT(id) DO NOTHING",
             (tid, display_name(ref.name), ref.short or short_name(display_name(ref.name)), ref.logo),
         )
-    elif ref.logo:
-        conn.execute("UPDATE teams SET logo_url = ? WHERE id = ? AND logo_url IS NULL", (ref.logo, tid))
+    else:
+        if ref.logo:
+            conn.execute("UPDATE teams SET logo_url = ? WHERE id = ? AND logo_url IS NULL", (ref.logo, tid))
+        if tid.startswith("csv:") and source != "csv":
+            # CSV names are ASCII abbreviations ('Pogon Szczecin', 'Gornik Z.'): show the fuller name of another source
+            conn.execute("UPDATE teams SET name = ? WHERE id = ?", (display_name(ref.name), tid))
     conn.execute("INSERT OR IGNORE INTO team_aliases(league_key, source, name, team_id) VALUES (?,?,?,?)", (league_key, source, ref.name, tid))
     return tid
 
@@ -79,3 +82,30 @@ def _similar(conn: sqlite3.Connection, league_key: str, source: str, name: str) 
     if len(ranked) > 1 and ranked[1][1] >= ranked[0][1]:
         return None  # ambiguous: better a separate team than a wrong merge
     return ranked[0][0]
+
+
+def merge_split_teams(conn: sqlite3.Connection) -> int:
+    """Re-run name matching for teams created from The Odds API names and merge them into existing teams.
+
+    Needed when matching improves after teams were stored (ETAP 4: 'Wisła Płock' lost its 'ł' and became a
+    separate team without history). Idempotent; runs at the start of every pipeline run.
+    """
+    merged = 0
+    rows = conn.execute("SELECT DISTINCT league_key, source, name, team_id FROM team_aliases WHERE team_id LIKE 'odds:%'").fetchall()
+    for r in rows:
+        if conn.execute("SELECT COUNT(*) FROM team_aliases WHERE team_id = ?", (r["team_id"],)).fetchone()[0] != 1:
+            continue  # already linked across sources: keep
+        target = _similar(conn, r["league_key"], r["source"], r["name"])
+        if target is None or target == r["team_id"]:
+            continue
+        old = r["team_id"]
+        for col in ("home_team_id", "away_team_id"):
+            conn.execute(f"UPDATE events SET {col} = ? WHERE {col} = ?", (target, old))
+        conn.execute("UPDATE team_aliases SET team_id = ? WHERE team_id = ?", (target, old))
+        conn.execute("UPDATE injuries SET team_id = ? WHERE team_id = ?", (target, old))
+        conn.execute("DELETE FROM teams WHERE id = ?", (old,))
+        if r["source"] != "csv" and target.startswith("csv:"):
+            conn.execute("UPDATE teams SET name = ? WHERE id = ?", (display_name(r["name"]), target))
+        merged += 1
+    conn.commit()
+    return merged

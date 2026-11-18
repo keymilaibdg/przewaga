@@ -50,3 +50,9 @@ API-Football (plan Free) zwraca dla sezonów 2025 i 2026 błąd: `{"plan": "Free
 | 6. Uruchomienie na GitHubie | ⏳ | Ręcznie: Actions → „Aktualizacja danych” → Run workflow → gałąź `etap-4`, morning. Potem sprawdzić `events.json` w gałęzi `data` i adnotacje „Pipeline”, merge `etap-4` → `main`. |
 
 Uwagi: koszt kursów ≈ 18 kredytów na pełny przebieg 8 lig vs ~16/dzień z 500/mies. — budżet sam pomija ligi bez meczów w 36 h. Bez kontuzji kompletność danych spada o 0,2 (ocena jakości −2,6 pkt) — do kalibracji w ETAPIE 5. Sekret `APISPORTS_KEY` nie jest już używany przez workflow (adapter zostaje do backtestów).
+
+### Krok 6: pierwsze prawdziwe uruchomienie (2026-11-18, run 44273875158, gałąź `etap-4`) ✅
+- Sukces, **0 błędów pipeline**. Mecze: football-data.org 1210, balldontlie 2522 (2 sezony), The Odds API `/events` 38; historia CSV 1796 wierszy. Wszyscy dostawcy „połączony”, zużyto 6 kredytów (zostało 494).
+- `events.json`: 109 meczów z 7 lig (NBA 51, Euroliga 11, La Liga 10, PL 10, Ekstraklasa 9, Bundesliga 9, LM 9; Liga Europy: najbliższa kolejka poza 7-dniowym horyzontem). Kursy tylko NBA i Euroliga: piłka nie miała meczów w oknie 36 h (przerwa reprezentacyjna). 14 typów NBA (EV 2,2–6,5%, ocena 62–74). Euroliga: same kursy + flaga.
+- **Wykryty błąd i poprawka:** „ł” znikało przy normalizacji nazw („Wisła Płock” → „wisa pock”), więc 5 drużyn Ekstraklasy z kursów nie trafiło na historię z CSV. Dodano transliterację (ł, ø, ß, đ, æ, ı) i `teams.merge_split_teams` (na starcie każdego przebiegu scala takie drużyny; na prawdziwej bazie: 5 poprawnych scaleń, m.in. „Wisła Kraków” → CSV „Wisla”). Nazwy z CSV (ASCII) zastępowane pełniejszymi z kursów.
+- Do zrobienia: merge `etap-4` → `main` (harmonogram działa tylko na `main`; stary kod na `main` nie ma kluczy API-SPORTS dla bieżących sezonów).

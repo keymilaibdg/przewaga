@@ -63,6 +63,11 @@ def test_resolver_never_merges_two_names_from_one_source(conn):
     assert teams.resolve(conn, "ekstraklasa", "odds", TeamRef(None, "Lech Poznań")) == lech
     assert teams.resolve(conn, "ekstraklasa", "odds", TeamRef(None, "Lechia Gdańsk")) == lechia
     assert teams.resolve(conn, "ekstraklasa", "odds", TeamRef(None, "Górnik Zabrze"), create=False) is None
+    # 'ł' is not decomposed by NFKD: without transliteration 'Wrocław' became 'wrocaw' and never matched
+    slask = teams.resolve(conn, "ekstraklasa", "csv", TeamRef(None, "Slask Wroclaw"))
+    assert teams.resolve(conn, "ekstraklasa", "odds", TeamRef(None, "Śląsk Wrocław")) == slask
+    assert teams.slug("Widzew Łódź") == "widzew-lodz"
+    assert conn.execute("SELECT name FROM teams WHERE id = ?", (slask,)).fetchone()["name"] == "Śląsk Wrocław", "fuller name replaces the CSV one"
 
 
 def test_same_match_from_two_sources_is_stored_once(conn):
@@ -271,3 +276,19 @@ def test_unmatched_odds_never_create_events_in_fixture_api_leagues(conn):
     assert ingest.store_odds(conn, lg, [oe], NOW) == {"matched": 0, "unmatched": 1, "quotes": 0, "created": 0}
     assert conn.execute("SELECT COUNT(*) n FROM events").fetchone()["n"] == 0
     assert conn.execute("SELECT COUNT(*) n FROM teams").fetchone()["n"] == 0
+
+
+def test_teams_split_by_old_matching_are_merged(conn):
+    """Before the 'ł' fix 'Wisła Płock' (odds) did not match 'Wisla Plock' (CSV) and got its own team."""
+    ko = NOW + timedelta(days=2)
+    csv_team = teams.resolve(conn, "ekstraklasa", "csv", TeamRef(None, "Wisla Plock"))
+    other = teams.resolve(conn, "ekstraklasa", "csv", TeamRef(None, "Legia"))
+    conn.execute("INSERT INTO teams(id, name, short_name) VALUES ('odds:ekstraklasa:wisa-pock', 'Wisła Płock', 'WIS')")
+    conn.execute("INSERT INTO team_aliases VALUES ('ekstraklasa', 'odds', 'Wisła Płock', 'odds:ekstraklasa:wisa-pock')")
+    ingest.upsert(conn, "events", {"id": "odds:x", "sport": "football", "league_key": "ekstraklasa", "season": "2026", "home_team_id": "odds:ekstraklasa:wisa-pock",
+                                   "away_team_id": other, "kickoff": ingest.iso(ko), "status": "scheduled", "home_score": None, "away_score": None, "venue": None, "updated_at": ingest.iso(NOW)})
+    assert teams.merge_split_teams(conn) == 1
+    assert conn.execute("SELECT home_team_id FROM events WHERE id = 'odds:x'").fetchone()["home_team_id"] == csv_team
+    assert conn.execute("SELECT name FROM teams WHERE id = ?", (csv_team,)).fetchone()["name"] == "Wisła Płock"
+    assert conn.execute("SELECT 1 FROM teams WHERE id = 'odds:ekstraklasa:wisa-pock'").fetchone() is None
+    assert teams.merge_split_teams(conn) == 0, "idempotent"

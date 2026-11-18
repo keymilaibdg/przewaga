@@ -54,8 +54,16 @@ _ALIASES = {
 }
 
 
+# Letters that NFKD does not decompose into ASCII (they would be dropped: 'Łódź' -> 'odz').
+_TRANSLIT = str.maketrans({"ł": "l", "Ł": "L", "ø": "o", "Ø": "O", "đ": "d", "Đ": "D", "ß": "ss", "æ": "ae", "Æ": "AE", "ı": "i"})
+
+
+def ascii_fold(name: str) -> str:
+    return unicodedata.normalize("NFKD", name.translate(_TRANSLIT)).encode("ascii", "ignore").decode()
+
+
 def normalize(name: str) -> str:
-    s = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower()
+    s = ascii_fold(name).lower()
     s = s.replace("&", " and ")
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     s = " ".join(w for w in s.split() if w not in _STOP)
