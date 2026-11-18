@@ -5,6 +5,8 @@ import { StaticDataProvider, detectLiveData } from "./api/staticProvider";
 import type { DataProvider } from "./api/provider";
 import { LogoMark } from "./components/layout/Logo";
 import { AppShell } from "./components/layout/AppShell";
+import { CouponProvider } from "./api/CouponContext";
+import { CouponButton } from "./components/coupon/Coupon";
 import { useRoute } from "./router";
 import { DashboardPage } from "./pages/Dashboard";
 import { TipsPage } from "./pages/Tips";
@@ -70,9 +72,12 @@ export function App() {
 
   return (
     <DataProviderRoot provider={provider}>
-      <AppShell path={route.path} demo={provider.mode === "demo"}>
-        <div key={`${route.path}?${route.query.toString()}`}>{page}</div>
-      </AppShell>
+      <CouponProvider>
+        <AppShell path={route.path} demo={provider.mode === "demo"}>
+          <div key={`${route.path}?${route.query.toString()}`}>{page}</div>
+        </AppShell>
+        <CouponButton />
+      </CouponProvider>
     </DataProviderRoot>
   );
 }

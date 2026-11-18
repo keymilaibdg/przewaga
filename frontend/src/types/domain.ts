@@ -274,7 +274,16 @@ export interface UserSettings {
   maxRisk: RiskLevel;
   /** Bookmakers the user does not want recommendations from. */
   excludedBookmakers: BookmakerId[];
-  notifications: { newValue: boolean; oddsMove: boolean; withdrawn: boolean; lineups: boolean };
+  notifications: {
+    newValue: boolean;
+    oddsMove: boolean;
+    withdrawn: boolean;
+    lineups: boolean;
+    /** Settled recommendations (won / lost). */
+    settled: boolean;
+    /** Reminder one hour before a match from the coupon (APK). */
+    couponReminders: boolean;
+  };
   unitStake: number;
   /** Tax deducted from the stake by the user's bookmaker (Poland: 0.12; tax-free promo: 0). */
   stakeTax: number;

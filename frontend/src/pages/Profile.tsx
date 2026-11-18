@@ -1,10 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { LuDownload, LuHeartHandshake, LuLock, LuPlug, LuSmartphone, LuUser } from "react-icons/lu";
+import { LuBellRing, LuDownload, LuHeartHandshake, LuLock, LuPlug, LuSmartphone, LuUser } from "react-icons/lu";
 import { useData, useQuery } from "../api/DataContext";
 import { PageHeader } from "../components/layout/AppShell";
 import { Badge, Card, Segmented, Toggle } from "../components/ui/primitives";
 import { fmtPct } from "../lib/format";
 import type { ProviderHealth, RiskLevel, UserSettings } from "../types/domain";
+import { Slider } from "../components/ui/Slider";
+import { notificationPermission, requestNotificationPermission, type PermissionState } from "../lib/notify";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -87,11 +89,26 @@ export function ProfilePage() {
         {books.data?.length === 0 && <p className="py-3 text-xs text-fg-faint">Brak danych o bukmacherach — pojawią się po pierwszym pobraniu kursów.</p>}
       </Group>
 
-      <Group title="Powiadomienia" desc="Powiadomienia push działają po instalacji PWA i uruchomieniu backendu (ETAP 6).">
+      <Group
+        title="Powiadomienia"
+        desc={
+          __NATIVE__
+            ? "Telefon sam sprawdza nowe analizy mniej więcej co 2 godziny (Android może to opóźnić przy oszczędzaniu baterii). Bez serwera i bez kont."
+            : "Powiadomienia działają w aplikacji na Androida (APK). W przeglądarce lista powiadomień jest na ekranie Start."
+        }
+      >
+        {__NATIVE__ && <NotificationPermission />}
         <Toggle label="Nowe okazje z dodatnim EV" checked={settings.notifications.newValue} onChange={(v) => set("notifications", { ...settings.notifications, newValue: v })} />
-        <Toggle label="Istotne zmiany kursów" checked={settings.notifications.oddsMove} onChange={(v) => set("notifications", { ...settings.notifications, oddsMove: v })} />
         <Toggle label="Wycofane rekomendacje" checked={settings.notifications.withdrawn} onChange={(v) => set("notifications", { ...settings.notifications, withdrawn: v })} />
-        <Toggle label="Potwierdzone składy" checked={settings.notifications.lineups} onChange={(v) => set("notifications", { ...settings.notifications, lineups: v })} />
+        <Toggle label="Rozliczone typy" checked={settings.notifications.settled} onChange={(v) => set("notifications", { ...settings.notifications, settled: v })} />
+        <Toggle
+          label="Przypomnienie o meczach z kuponu"
+          description="Godzinę przed rozpoczęciem każdego meczu z kuponu"
+          checked={settings.notifications.couponReminders}
+          onChange={(v) => set("notifications", { ...settings.notifications, couponReminders: v })}
+        />
+        <Toggle label="Istotne zmiany kursów" description="Wkrótce — kursy pobierane są 1–2 razy dziennie" checked={settings.notifications.oddsMove} onChange={(v) => set("notifications", { ...settings.notifications, oddsMove: v })} />
+        <Toggle label="Potwierdzone składy" description="Niedostępne — brak składów w darmowych źródłach" checked={settings.notifications.lineups} onChange={(v) => set("notifications", { ...settings.notifications, lineups: v })} />
       </Group>
 
       <Group title="Źródła danych" desc={live ? "Stan ostatniego pobrania z każdego źródła. Aktualizacja 1–2 razy dziennie (limit darmowych planów)." : "Stan integracji API. W trybie DEMO żadne źródło nie jest podłączone."}>
@@ -145,25 +162,30 @@ function Group({ title, desc, icon, children }: { title: string; desc?: string; 
   );
 }
 
-function Slider({ label, value, min, max, step, display, onChange }: { label: string; value: number; min: number; max: number; step: number; display: string; onChange: (v: number) => void }) {
-  const pct = ((value - min) / (max - min)) * 100;
+/** Android 13+: notifications need the user's permission. */
+function NotificationPermission() {
+  const [state, setState] = useState<PermissionState | null>(null);
+  useEffect(() => {
+    notificationPermission().then(setState);
+  }, []);
+  if (state === null || state === "unsupported") return null;
+  if (state === "granted")
+    return (
+      <p className="flex items-center gap-2 py-3 text-xs text-pos">
+        <LuBellRing className="size-4" /> Powiadomienia włączone
+      </p>
+    );
   return (
-    <label className="block py-3">
-      <span className="flex items-center justify-between text-sm">
-        <span>{label}</span>
-        <span className="tnum font-semibold text-accent">{display}</span>
-      </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-3 h-1.5 w-full cursor-pointer appearance-none rounded-full [&::-moz-range-thumb]:size-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white [&::-webkit-slider-thumb]:size-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_2px_8px_rgba(0,0,0,.5)]"
-        style={{ background: `linear-gradient(90deg, var(--color-accent) ${pct}%, var(--color-ink-600) ${pct}%)` }}
-      />
-    </label>
+    <div className="py-3">
+      <button
+        type="button"
+        onClick={() => requestNotificationPermission().then(setState)}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-semibold text-ink-950 active:scale-[0.98]"
+      >
+        <LuBellRing className="size-4" /> Zezwól na powiadomienia
+      </button>
+      {state === "denied" && <p className="mt-2 text-[11px] leading-relaxed text-fg-faint">Powiadomienia są zablokowane. Włącz je w ustawieniach telefonu: Aplikacje → Przewaga → Powiadomienia.</p>}
+    </div>
   );
 }
 

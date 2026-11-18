@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   minEv: 0.02,
   maxRisk: "high",
   excludedBookmakers: [],
-  notifications: { newValue: true, oddsMove: true, withdrawn: true, lineups: false },
+  notifications: { newValue: true, oddsMove: true, withdrawn: true, lineups: false, settled: true, couponReminders: true },
   unitStake: 10,
   stakeTax: 0.12,
   dailyLimitUnits: 5,

@@ -15,6 +15,7 @@ import type {
 import { computePerformance } from "../lib/performance";
 import { registerBookmakers } from "../lib/bookmakers";
 import { loadSettings, saveSettings } from "./settingsStore";
+import { configureBackgroundCheck } from "../lib/notify";
 
 export interface LiveMeta {
   origin: "live";
@@ -99,6 +100,7 @@ export class StaticDataProvider implements DataProvider {
     readonly offlineSince: string | null = null,
   ) {
     registerBookmakers(meta.bookmakers);
+    void configureBackgroundCheck(this.settings, base);
     this.events = getJson<SportEvent[]>(`${base}/events.json`, "events").then((r) => r.body);
     this.history = getJson<HistoryEntry[]>(`${base}/history.json`, "history").then((r) => r.body);
     try {
@@ -180,6 +182,7 @@ export class StaticDataProvider implements DataProvider {
   async saveSettings(s: UserSettings) {
     this.settings = s;
     saveSettings(s);
+    void configureBackgroundCheck(s, this.base);
     return s;
   }
 

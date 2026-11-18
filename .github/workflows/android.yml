@@ -5,7 +5,7 @@ name: Budowa aplikacji Android (APK)
 # (updates install over the previous version). Without it a debug-signed APK is built.
 on:
   push:
-    branches: [main]
+    branches: [main, etap-6]
     paths:
       - "frontend/**"
       - ".github/workflows/android.yml"
@@ -77,6 +77,9 @@ jobs:
           npx cap add android 2>&1 | tail -20
           npx @capacitor/assets generate --android --iconBackgroundColor "#0e1525" --iconBackgroundColorDark "#0e1525" --splashBackgroundColor "#060912" --splashBackgroundColorDark "#060912"
           npx cap sync android
+          # @capacitor/background-runner ships its JavaScript engine as an .aar next to the plugin (see its docs)
+          sed -i "s#dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'#&\n        dirs '../../node_modules/@capacitor/background-runner/android/src/main/libs', 'libs'#" android/app/build.gradle
+          grep -q "background-runner/android/src/main/libs" android/app/build.gradle || { echo "::error::Nie udało się dodać biblioteki background-runner do build.gradle"; sed -n '/repositories/,/}/p' android/app/build.gradle; exit 1; }
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"${{ steps.ver.outputs.version }}\"/" android/app/build.gradle
           chmod +x android/gradlew
 
@@ -119,7 +122,9 @@ jobs:
           name: Przewaga-${{ steps.ver.outputs.version }}
           path: Przewaga-${{ steps.ver.outputs.version }}.apk
 
+      # Feature branches only build (the APK is kept as a workflow artifact); releases come from main.
       - name: Publikacja w Releases
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.version }}
