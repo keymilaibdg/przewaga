@@ -1,0 +1,31 @@
+name: Generowanie package-lock.json (jednorazowe)
+
+# Temporary: resolves the dependency tree once and commits frontend/package-lock.json,
+# so APK builds can use `npm ci` (exact, verified versions). Removed after use.
+on:
+  push:
+    branches: [bezpieczenstwo]
+    paths: [".github/workflows/lockfile.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: "22"
+      - working-directory: frontend
+        run: |
+          npm install --package-lock-only --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npm test
+          npm audit --omit=dev || echo "::warning::npm audit zgłosił podatności (szczegóły w logu)"
+          git config user.name "przewaga-bot"
+          git config user.email "przewaga-bot@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "frontend: package-lock.json (dokładne wersje zależności) [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
