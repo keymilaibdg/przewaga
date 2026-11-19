@@ -5,7 +5,7 @@ name: Budowa aplikacji Android (APK)
 # (updates install over the previous version). Without it a debug-signed APK is built.
 on:
   push:
-    branches: [main, typy-aplikacji]
+    branches: [main, bezpieczenstwo]
     paths:
       - "frontend/**"
       - ".github/workflows/android.yml"
@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: "22"
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: "21"
@@ -67,7 +67,7 @@ jobs:
           APP_VERSION: ${{ steps.ver.outputs.version }}
           DATA_URL: https://raw.githubusercontent.com/${{ github.repository }}/data
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm test
           npx vite build
 
@@ -82,6 +82,36 @@ jobs:
           grep -q "background-runner/android/src/main/libs" android/app/build.gradle || { echo "::error::Nie udało się dodać biblioteki background-runner do build.gradle"; sed -n '/repositories/,/}/p' android/app/build.gradle; exit 1; }
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"${{ steps.ver.outputs.version }}\"/" android/app/build.gradle
           chmod +x android/gradlew
+
+      # Privacy: @capacitor/background-runner declares location permissions (its unused Geolocation API)
+      # and FOREGROUND_SERVICE; they are stripped from the merged manifest. Backup to Google Drive is
+      # disabled so the coupon and settings never leave the device.
+      - name: Manifest — usunięcie zbędnych uprawnień i kopii zapasowej
+        working-directory: frontend
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          if 'xmlns:tools=' not in s:
+              s = s.replace("<manifest ", '<manifest xmlns:tools="http://schemas.android.com/tools" ', 1)
+          remove = [
+              "android.permission.ACCESS_COARSE_LOCATION",
+              "android.permission.ACCESS_FINE_LOCATION",
+              "android.permission.ACCESS_BACKGROUND_LOCATION",
+              "android.permission.FOREGROUND_SERVICE",
+          ]
+          block = "".join(f'    <uses-permission android:name="{n}" tools:node="remove" />\n' for n in remove)
+          s = s.replace("</manifest>", block + "</manifest>", 1)
+          if 'android:allowBackup="true"' in s:
+              s = s.replace('android:allowBackup="true"', 'android:allowBackup="false"', 1)
+          elif 'android:allowBackup=' not in s:
+              s = s.replace("<application", '<application android:allowBackup="false"', 1)
+          if 'android:allowBackup="false"' not in s:
+              raise SystemExit("::error::Nie udało się ustawić allowBackup=false")
+          p.write_text(s)
+          PY
+          cat android/app/src/main/AndroidManifest.xml
 
       - name: Build APK
         working-directory: frontend/android
@@ -117,7 +147,29 @@ jobs:
           ls -la "$OUT"
           echo "### APK gotowy: $(basename "$OUT") ($(du -h "$OUT" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      # Security gate: the built APK may request only the allowlisted permissions and must not allow backup.
+      # A new plugin that adds a permission fails the build until the allowlist is reviewed.
+      - name: Kontrola uprawnień APK
+        run: |
+          OUT="$GITHUB_WORKSPACE/Przewaga-${{ steps.ver.outputs.version }}.apk"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          ALLOWED="android.permission.INTERNET
+          android.permission.ACCESS_NETWORK_STATE
+          android.permission.POST_NOTIFICATIONS
+          android.permission.RECEIVE_BOOT_COMPLETED
+          android.permission.WAKE_LOCK
+          android.permission.SCHEDULE_EXACT_ALARM
+          pl.przewaga.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+          PERMS=$("$BT/aapt2" dump permissions "$OUT" | grep "uses-permission" | grep -oE "name='[^']+'" | cut -d"'" -f2 | sort -u)
+          echo "Uprawnienia w APK:"; echo "$PERMS"
+          BAD=$(comm -23 <(echo "$PERMS") <(echo "$ALLOWED" | sed 's/^ *//' | sort -u))
+          if [ -n "$BAD" ]; then echo "::error title=Niedozwolone uprawnienia w APK::$(echo $BAD)"; exit 1; fi
+          BACKUP=$("$BT/aapt2" dump xmltree --file AndroidManifest.xml "$OUT" | grep "allowBackup" || true)
+          echo "allowBackup: $BACKUP"
+          if [ -z "$BACKUP" ] || echo "$BACKUP" | grep -qiE "true|0xffffffff"; then echo "::error title=Kopia zapasowa włączona::allowBackup musi być false"; exit 1; fi
+          echo "### Uprawnienia: $(echo $PERMS)" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Przewaga-${{ steps.ver.outputs.version }}
           path: Przewaga-${{ steps.ver.outputs.version }}.apk
@@ -125,7 +177,7 @@ jobs:
       # Feature branches only build (the APK is kept as a workflow artifact); releases come from main.
       - name: Publikacja w Releases
         if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: v${{ steps.ver.outputs.version }}
           name: Przewaga ${{ steps.ver.outputs.version }}
